@@ -1,7 +1,7 @@
 # Личный проект «Кексобукинг» [![Build status][travis-image]][travis-url]
 
 * Студент: [Юрий Кузьменко](https://up.htmlacademy.ru/javascript/15/user/868771).
-* Наставник: `Неизвестно`.
+* Наставник: Лариса Клец.
 
 ---
 
