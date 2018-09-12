@@ -37,9 +37,6 @@ var GUEST_MAX = 10;
 // число строк с адресом фото жилья
 var DWEL_PHOTO_ADDR_NUM = 3;
 
-// шаблон координат метки
-var PIN_LOCATION = 'left: {{location.x}}px; top: {{location.y}}px;';
-
 // массив индексов аватаров
 var avatarNums = [1, 2, 3, 4, 5, 6, 7, 8];
 
@@ -186,7 +183,7 @@ function getRandomValueNum(minValue, maxValue) {
 
 // ф-ия возвращает фрагмент с метками
 function createPins(ads) {
-  var template = document.getElementById('pin').content;
+  var template = document.querySelector('#pin').content;
   var fragment = document.createDocumentFragment();
 
   for (var i = 0; i < ads.length; i++) {
@@ -203,7 +200,8 @@ function createPin(pinObject, template) {
 
   // Кнопка
   var button = pin.querySelector('.map__pin');
-  button.style = PIN_LOCATION.replace('{{location.x}}', pinObject.location.x - Math.round(PIN_WIDTH / 2)).replace('{{location.y}}', pinObject.location.y - PIN_HEIGHT); // с учетом размеров самого пина
+  button.style.left = (pinObject.location.x - Math.round(PIN_WIDTH / 2)) + 'px'; // с учетом размеров самого пина
+  button.style.top = (pinObject.location.y - PIN_HEIGHT) + 'px'; // с учетом размеров самого пина
 
   // Иконка
   var img = pin.querySelector('img');
@@ -259,8 +257,10 @@ function fillFeatures(features, featArr) {
 
   // добавим из featArr
   for (i = 0; i < featArr.length; i++) {
-    var elementHTML = '<li class="popup__feature popup__feature--{{feature}}"></li>'.replace('{{feature}}', featArr[i]);
-    features.insertAdjacentHTML('beforeend', elementHTML);
+    var elLi = document.createElement('li');
+    elLi.classList.add('popup__feature');
+    elLi.classList.add('popup__feature--' + featArr[i]);
+    features.appendChild(elLi);
   }
 
 }
@@ -275,15 +275,20 @@ function fillPhoto(photos, photoArr) {
 
   // добавим из photoArr
   for (i = 0; i < photoArr.length; i++) {
-    var elementHTML = '<img src="{{src}}" class="popup__photo" width="45" height="40" alt="Фотография жилья">'.replace('{{src}}', photoArr[i]);
-    photos.insertAdjacentHTML('beforeend', elementHTML);
+    var elImg = document.createElement('img');
+    elImg.classList.add('popup__photo');
+    elImg.width = 45;
+    elImg.height = 40;
+    elImg.alt = 'Фотография жилья';
+    elImg.src = photoArr[i];
+    photos.appendChild(elImg);
   }
 
 }
 
 // ф-ия создает DOM-element объявления
 function getadvCard(adv) {
-  var template = document.getElementById('card').content;
+  var template = document.querySelector('#card').content;
   var card = template.cloneNode(true);
   var strCapacity = STR_ROOM_GUEST.replace('{{offer.rooms}}', adv.offer.rooms).replace('{{offer.guests}}', adv.offer.guests).replace('{{room}}}', getGoodRoomText(adv.offer.rooms)).replace('{{guest}}', getGoodGuestText(adv.offer.guests));
   var strCheckInOut = STR_CHECK_IN_OUT.replace('{{offer.checkin}}', adv.offer.checkin).replace('{{offer.checkout}}', adv.offer.checkout);
