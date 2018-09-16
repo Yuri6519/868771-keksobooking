@@ -12,9 +12,32 @@ var STR_ROOM_GUEST = '{{offer.rooms}} {{room}}} для {{offer.guests}} {{guest}
 // шаблон времени заезда и выезда
 var STR_CHECK_IN_OUT = 'Заезд после {{offer.checkin}}, выезд до {{offer.checkout}}';
 
-// pin
+// обычная метка - pin
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
+
+// переменная для хранения левого верхнего угла главной метки - left
+var mainPinLeft;
+// переменная для хранения левого верхнего угла главной метки - top
+var mainPinTop;
+// ширина главной метки (непонятно где брать - беру по размеру из панели дебагера)
+var mainPinWidth = 65;
+// высота главной метки (непонятно где брать - беру по размеру из панели дебагера)
+var mainPinHeight = 65;
+// координата X середины главной метки
+var mainPinMiddleX;
+// координата Y середины главной метки
+var mainPinMiddleY;
+// хвост метки (непонятно где брать - беру по размеру из панели дебагера)
+var mainPinTail = 20; // весь квадрат = 65, image = 62, хвост идет от image и длина = 22. Округлил до 2 (65 - 62 / 2 = 1,5) и тогда хвост выходит за рамку 22-2=20. Как-так...
+// метка с хвостом
+var mainPinFullHeight = mainPinHeight + mainPinTail;
+
+// pin ID
+var PIN_ID = 'pinid';
+
+// массив объявлений
+var ads = [];
 
 // location
 var LOCATION_MIN_X = 1 + Math.round(PIN_WIDTH / 2); // минимальная координаты плюс половина ширины метки (чтобы не уходила за край)
@@ -39,6 +62,7 @@ var DWEL_PHOTO_ADDR_NUM = 3;
 
 // массив индексов аватаров
 var avatarNums = [1, 2, 3, 4, 5, 6, 7, 8];
+var avatarNumsSave = avatarNums.slice(); // для хранения при новой инициализации, так как затирается avatarNums
 
 // массив строк - заголовков предложения
 var titleData = [
@@ -50,6 +74,8 @@ var titleData = [
   'Некрасивый негостеприимный домик',
   'Уютное бунгало далеко от моря',
   'Неуютное бунгало по колено в воде'];
+
+var titleDataSave = titleData.slice(); // для хранения при новой инициализации, так как затирается titleData
 
 // массив типов жилья
 var dwellingTypes = ['palace', 'flat', 'house', 'bungalo'];
@@ -182,26 +208,81 @@ function getRandomValueNum(minValue, maxValue) {
 }
 
 // ф-ия возвращает фрагмент с метками
-function createPins(ads) {
+function createPins() {
   var template = document.querySelector('#pin').content;
   var fragment = document.createDocumentFragment();
 
   for (var i = 0; i < ads.length; i++) {
-    fragment.appendChild(createPin(ads[i], template));
+    fragment.appendChild(createPin(i, ads[i], template));
   }
 
   return fragment;
 
 }
 
+// создает и инициализирует атрибут у объекта
+function setObjectAttribute(obj, attrName, atrValue) {
+  var attr = document.createAttribute(attrName);
+  attr.value = atrValue;
+  obj.attributes.setNamedItem(attr);
+}
+
+// читает атрибут
+function getAttributeValue(element, attrName) {
+  var value;
+  for (var i = 0; i < element.attributes.length; i++) {
+    if (element.attributes[i].name === attrName) {
+      value = element.attributes[i].value;
+    }
+  }
+
+  return value;
+
+}
+
+// чистка от прежних объявлений
+function removeOldAds() {
+  var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
+
+  // чистим от прежних объявлений
+  for (var i = 0; i < mapAds.length; i++) {
+    mapAds[i].remove();
+  }
+
+}
+
+// обработка клика на метке
+function processPinClick(evt) {
+  var button = evt.currentTarget;
+  var pinId = getAttributeValue(button, PIN_ID);
+
+  removeOldAds();
+
+  // карточка
+  var advCard = getadvCard(ads[pinId]);
+
+  // 5. Вставим перед в блок .map блоком .map__filters-container
+  var map = document.querySelector('.map');
+  map.insertBefore(advCard, map.querySelector('.map__filters-container'));
+
+}
+
 // ф-ия создает одну метку
-function createPin(pinObject, template) {
+function createPin(index, pinObject, template) {
   var pin = template.cloneNode(true);
 
   // Кнопка
   var button = pin.querySelector('.map__pin');
   button.style.left = (pinObject.location.x - Math.round(PIN_WIDTH / 2)) + 'px'; // с учетом размеров самого пина
   button.style.top = (pinObject.location.y - PIN_HEIGHT) + 'px'; // с учетом размеров самого пина
+
+  // добавим ИД элемента для связки с событием
+  setObjectAttribute(button, PIN_ID, index);
+
+  // событие клика
+  button.addEventListener('click', function (evt) {
+    processPinClick(evt);
+  });
 
   // Иконка
   var img = pin.querySelector('img');
@@ -212,7 +293,7 @@ function createPin(pinObject, template) {
 
 }
 
-// ф-ия возвращает русское название типа жтлья
+// ф-ия возвращает русское название типа жилья
 function getDwellingTypeRus(typeStr) {
   var res = '';
 
@@ -313,35 +394,177 @@ function getadvCard(adv) {
   // аватар
   card.querySelector('.popup__avatar').src = adv.author.avatar;
 
+  // кнопка "Закрыть"
+  // регистрация события закрытия объявления
+  var btnAdClose = card.querySelector('.popup__close');
+
+  btnAdClose.addEventListener('click', function () {
+    removeOldAds();
+  });
+
   return card;
 }
 
-// Точка входа
-// массив объектов объявлений
-var ads = fillAdsArray(8);
+// показ похожих объявлений
+function showSimilarAds() {
+  // инициализируем, то что затерли
+  if (avatarNums.length === 0) {
+    avatarNums = avatarNumsSave.slice();
+  }
 
-// 1. Уберем класс .map--faded
-var map = document.querySelector('.map');
-map.classList.remove('map--faded');
+  if (titleData.length === 0) {
+    titleData = titleDataSave.slice();
+  }
 
-// 2. Создадим DOM элементы меток
-var pinContainer = createPins(ads);
+  // массив объектов объявлений
+  ads = fillAdsArray(8);
 
-// 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
-// 3.1. Чистка блока от старых пинов
-var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
+  // 2. Создадим DOM элементы меток
+  var pinContainer = createPins(ads);
 
-for (var i = 0; i < mapPins.length; i++) {
-  if (!mapPins[i].classList.contains('map__pin--main')) {
-    mapPins[i].remove();
+  // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
+  // 3.1. Чистка блока от старых пинов
+  var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
+
+  for (var i = 0; i < mapPins.length; i++) {
+    if (!mapPins[i].classList.contains('map__pin--main')) {
+      mapPins[i].remove();
+    }
+  }
+
+  // 3.2. Добавляем в блок
+  document.querySelector('.map__pins').appendChild(pinContainer);
+
+}
+
+// тестовая инициализация карты
+function initMapTest() {
+  // 1. Уберем класс .map--faded
+  // var map = document.querySelector('.map');
+  // map.classList.remove('map--faded');
+
+  // showSimilarAds();
+
+  // // 4. Объявление
+  // var advCard = getadvCard(ads[0]);
+
+  // // 5. Вставим перед в блок .map блоком .map__filters-container
+  // map.insertBefore(advCard, map.querySelector('.map__filters-container'));
+
+}
+
+// ф-ия блокирует/разблокирует карту
+function toggleMapAbility(isNotFaded) {
+  var map = document.querySelector('.map');
+  if (isNotFaded) {
+    map.classList.remove('map--faded');
+  } else {
+    map.classList.add('map--faded');
+  }
+
+}
+
+// ф-ия блокирует/разблокирует форму добавления объявления
+function toggleAdFormAbility(isEnabled) {
+  // form
+  var adForm = document.querySelector('.ad-form');
+  if (isEnabled) {
+    adForm.classList.remove('ad-form--disabled');
+  } else {
+    adForm.classList.add('ad-form--disabled');
+  }
+
+  // fieldset
+  var adFormFieldSets = adForm.querySelectorAll('fieldset');
+  for (var i = 0; i < adFormFieldSets.length; i++) {
+    adFormFieldSets[i].disabled = !isEnabled;
   }
 }
 
-// 3.2. Добавляем в блок
-document.querySelector('.map__pins').appendChild(pinContainer);
+// ф-ия блокирует/разблокирует форму фильтрации объявлений
+function toggleFilterFormAbility(isEnabled) {
+  // block select elements
+  var adFormFieldSets = document.querySelector('.map__filters').querySelectorAll('select');
+  for (var i = 0; i < adFormFieldSets.length; i++) {
+    adFormFieldSets[i].disabled = !isEnabled;
+  }
 
-// 4. Объявление
-var advCard = getadvCard(ads[0]);
+  // block fieldset element - there is just one in the whole document, so cycle isn't needed
+  document.querySelector('.map__filters').querySelector('fieldset').disabled = !isEnabled;
+}
 
-// 5. Вставим перед в блок .map блоком .map__filters-container
-map.insertBefore(advCard, map.querySelector('.map__filters-container'));
+// главная ф-ия переключения активности формы и карты
+function toggleMainFormActivity(isActive) {
+  toggleAdFormAbility(isActive);
+  toggleFilterFormAbility(isActive);
+  toggleMapAbility(isActive);
+}
+
+function getAddressStr(addrX, addrY) {
+  document.querySelector('.ad-form').querySelector('#address').value = addrX + ', ' + addrY;
+}
+
+// установка значения адреса (острый конец метки)
+function setAddress() {
+  // evt использоваться будет далее (скорее всего) для определения координат курсора мыши
+  // сейчас нет перетаскивания, считаем координаты неизменными
+  // var mainPin = document.querySelector('.map__pin--main');
+
+  // координаты хвоста относительно верхнего левого угла без учета движения мыши
+  var tailX = mainPinLeft + Math.round(mainPinWidth / 2);
+  var tailY = mainPinTop + mainPinFullHeight;
+
+  getAddressStr(tailX, tailY);
+}
+
+// Обработка mouseup на главной метке
+function processMainPinMouseUp() {
+  removeOldAds();
+  toggleMainFormActivity(true);
+  setAddress();
+  showSimilarAds();
+}
+
+// инициализация
+function initMap() {
+  // перевод формы в неактивное состояние
+  // блок с картой .map содержит класс map--faded;
+  // форма заполнения информации об объявлении .ad-form содержит класс ad-form--disabled;
+  // все <input> и <select> формы .ad-form заблокированы с помощью атрибута disabled, добавленного на них или на их родительские блоки fieldset.
+  // форма с фильтрами .map__filters заблокирована так же, как и форма .ad-form
+  toggleMainFormActivity(false);
+
+  // главная метка
+  var mainPin = document.querySelector('.map__pin--main');
+
+  // эмуляция перетаскивания главной метки
+  // регистрация события mouseup на главной метке
+  mainPin.addEventListener('mouseup', function () {
+    processMainPinMouseUp();
+  });
+
+  // начальное значение поля address ТЗ:
+  // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
+
+  // верхний левый угол главной метки - left
+  mainPinLeft = parseInt(mainPin.style.left, 10);
+  // верхний левый угол главной метки - top
+  mainPinTop = parseInt(mainPin.style.top, 10);
+  // координата X середины главной метки
+  mainPinMiddleX = mainPinLeft + Math.round(mainPinWidth / 2); // только целые?
+  // координата Y середины главной метки
+  mainPinMiddleY = mainPinTop + Math.round((mainPinHeight / 2)); // только целые?
+
+  getAddressStr(mainPinMiddleX, mainPinMiddleY);
+
+}
+
+
+// Точка входа
+// Вынес предыдущие вывод меток и активацию карты в отдельный метод для теста, если пригодится потом
+initMapTest();
+
+// Инициализация
+initMap();
+
+
