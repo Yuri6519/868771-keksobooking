@@ -1,5 +1,9 @@
 'use strict';
 
+// коды кнопок
+// var KEY_RETURN = 13;
+var KEY_ESCAPE = 27;
+
 // шаблон адреса картинки аватара
 var STR_AVATAR_ADDR = 'img/avatars/user{{xx}}.png';
 
@@ -35,6 +39,9 @@ var mainPinFullHeight = mainPinHeight + mainPinTail;
 
 // pin ID
 var PIN_ID = 'pinid';
+
+// hidden
+var ATTR_HIDDEN = 'hidden';
 
 // массив объявлений
 var ads = [];
@@ -244,7 +251,6 @@ function getAttributeValue(element, attrName) {
 function removeOldAds() {
   var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
 
-  // чистим от прежних объявлений
   for (var i = 0; i < mapAds.length; i++) {
     mapAds[i].remove();
   }
@@ -256,7 +262,14 @@ function processPinClick(evt) {
   var button = evt.currentTarget;
   var pinId = getAttributeValue(button, PIN_ID);
 
+  // удалим старую карточку
   removeOldAds();
+
+  // сделаем предыдущую активную метку неактивной (если был клик до этого)
+  setPinNonactive();
+
+  // сделаем метку активной
+  button.classList.add('map__pin--active');
 
   // карточка
   var advCard = getadvCard(ads[pinId]);
@@ -344,6 +357,10 @@ function fillFeatures(features, featArr) {
     features.appendChild(elLi);
   }
 
+  if (feature.length === 0) {
+    setObjectAttribute(features, ATTR_HIDDEN, '');
+  }
+
 }
 
 function fillPhoto(photos, photoArr) {
@@ -365,6 +382,32 @@ function fillPhoto(photos, photoArr) {
     photos.appendChild(elImg);
   }
 
+  if (photo.length === 0) {
+    setObjectAttribute(photos, ATTR_HIDDEN, '');
+  }
+
+
+}
+
+function setPinNonactive() {
+  // в каждый момент времени может быть активна только одна метка
+  var activePin = document.querySelector('.map__pin--active');
+  if (activePin) {
+    activePin.classList.remove('map__pin--active');
+  }
+}
+
+function procesCardBtnCloseClick() {
+  removeOldAds();
+  setPinNonactive();
+  document.removeEventListener('keydown', onDocKeyDown);
+}
+
+// событие по нажатию клавиши
+function onDocKeyDown(evt) {
+  if (evt.keyCode === KEY_ESCAPE) {
+    procesCardBtnCloseClick();
+  }
 }
 
 // ф-ия создает DOM-element объявления
@@ -374,33 +417,72 @@ function getadvCard(adv) {
   var strCapacity = STR_ROOM_GUEST.replace('{{offer.rooms}}', adv.offer.rooms).replace('{{offer.guests}}', adv.offer.guests).replace('{{room}}}', getGoodRoomText(adv.offer.rooms)).replace('{{guest}}', getGoodGuestText(adv.offer.guests));
   var strCheckInOut = STR_CHECK_IN_OUT.replace('{{offer.checkin}}', adv.offer.checkin).replace('{{offer.checkout}}', adv.offer.checkout);
 
-  card.querySelector('.popup__title').textContent = adv.offer.title;
-  card.querySelector('.popup__text--address').textContent = adv.offer.address;
-  card.querySelector('.popup__text--price').textContent = adv.offer.price + '₽/ночь';
-  card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
-  card.querySelector('.popup__text--capacity').textContent = strCapacity;
-  card.querySelector('.popup__text--time').textContent = strCheckInOut;
+  if (adv.offer.title) {
+    card.querySelector('.popup__title').textContent = adv.offer.title;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__title'), ATTR_HIDDEN, '');
+  }
+
+  if (adv.offer.address) {
+    card.querySelector('.popup__text--address').textContent = adv.offer.address;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__text--address'), ATTR_HIDDEN, '');
+  }
+
+  if (adv.offer.price) {
+    card.querySelector('.popup__text--price').textContent = adv.offer.price + '₽/ночь';
+  } else {
+    setObjectAttribute(card.querySelector('.popup__text--price'), ATTR_HIDDEN, '');
+  }
+
+  if (adv.offer.type) {
+    card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
+  } else {
+    setObjectAttribute(card.querySelector('.popup__type'), ATTR_HIDDEN, '');
+  }
+
+  if (strCapacity) {
+    card.querySelector('.popup__text--capacity').textContent = strCapacity;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__text--capacity'), ATTR_HIDDEN, '');
+  }
+
+  if (strCheckInOut) {
+    card.querySelector('.popup__text--time').textContent = strCheckInOut;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__text--time'), ATTR_HIDDEN, '');
+  }
 
   // доступные удобства
   var features = card.querySelector('.popup__features');
   fillFeatures(features, adv.offer.features);
 
-  card.querySelector('.popup__description').textContent = adv.offer.description;
+  if (adv.offer.description) {
+    card.querySelector('.popup__description').textContent = adv.offer.description;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__description'), ATTR_HIDDEN, '');
+  }
 
   // фото
   var photos = card.querySelector('.popup__photos');
   fillPhoto(photos, adv.offer.photos);
 
   // аватар
-  card.querySelector('.popup__avatar').src = adv.author.avatar;
+  if (adv.author.avatar) {
+    card.querySelector('.popup__avatar').src = adv.author.avatar;
+  } else {
+    setObjectAttribute(card.querySelector('.popup__avatar'), ATTR_HIDDEN, '');
+  }
 
   // кнопка "Закрыть"
   // регистрация события закрытия объявления
   var btnAdClose = card.querySelector('.popup__close');
 
   btnAdClose.addEventListener('click', function () {
-    removeOldAds();
+    procesCardBtnCloseClick();
   });
+
+  document.addEventListener('keydown', onDocKeyDown);
 
   return card;
 }
@@ -525,6 +607,13 @@ function processMainPinMouseUp() {
   showSimilarAds();
 }
 
+// событие щелчка на главной метке
+function onMainPinMouseUp(evt) {
+  processMainPinMouseUp();
+  evt.currentTarget.removeEventListener('mouseup', onMainPinMouseUp);
+}
+
+
 // инициализация
 function initMap() {
   // перевод формы в неактивное состояние
@@ -537,11 +626,8 @@ function initMap() {
   // главная метка
   var mainPin = document.querySelector('.map__pin--main');
 
-  // эмуляция перетаскивания главной метки
   // регистрация события mouseup на главной метке
-  mainPin.addEventListener('mouseup', function () {
-    processMainPinMouseUp();
-  });
+  mainPin.addEventListener('mouseup', onMainPinMouseUp);
 
   // начальное значение поля address ТЗ:
   // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
