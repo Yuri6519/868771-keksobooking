@@ -4,6 +4,11 @@
 // var KEY_RETURN = 13;
 var KEY_ESCAPE = 27;
 
+// форма
+var FORM_ACTION = 'https://js.dump.academy/keksobooking';
+var FORM_METHOD = 'post';
+var FORM_ENCTYPE = 'multipart/form-data';
+
 // шаблон адреса картинки аватара
 var STR_AVATAR_ADDR = 'img/avatars/user{{xx}}.png';
 
@@ -39,9 +44,6 @@ var mainPinFullHeight = mainPinHeight + mainPinTail;
 
 // pin ID
 var PIN_ID = 'pinid';
-
-// hidden
-var ATTR_HIDDEN = 'hidden';
 
 // массив объявлений
 var ads = [];
@@ -383,7 +385,7 @@ function fillFeatures(features, featArr) {
   }
 
   if (feature.length === 0) {
-    setObjectAttribute(features, ATTR_HIDDEN, '');
+    feature.hidden = true;
   }
 
 }
@@ -408,7 +410,7 @@ function fillPhoto(photos, photoArr) {
   }
 
   if (photo.length === 0) {
-    setObjectAttribute(photos, ATTR_HIDDEN, '');
+    photo.hidden = true;
   }
 
 
@@ -445,37 +447,37 @@ function getadvCard(adv) {
   if (adv.offer.title) {
     card.querySelector('.popup__title').textContent = adv.offer.title;
   } else {
-    setObjectAttribute(card.querySelector('.popup__title'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__title').hidden = true;
   }
 
   if (adv.offer.address) {
     card.querySelector('.popup__text--address').textContent = adv.offer.address;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--address'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--address').hidden = true;
   }
 
   if (adv.offer.price) {
     card.querySelector('.popup__text--price').textContent = adv.offer.price + '₽/ночь';
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--price'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--price').hidden = true;
   }
 
   if (adv.offer.type) {
     card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
   } else {
-    setObjectAttribute(card.querySelector('.popup__type'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__type').hidden = true;
   }
 
   if (strCapacity) {
     card.querySelector('.popup__text--capacity').textContent = strCapacity;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--capacity'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--capacity').hidden = true;
   }
 
   if (strCheckInOut) {
     card.querySelector('.popup__text--time').textContent = strCheckInOut;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--time'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--time').hidden = true;
   }
 
   // доступные удобства
@@ -485,7 +487,7 @@ function getadvCard(adv) {
   if (adv.offer.description) {
     card.querySelector('.popup__description').textContent = adv.offer.description;
   } else {
-    setObjectAttribute(card.querySelector('.popup__description'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__description').hidden = true;
   }
 
   // фото
@@ -496,7 +498,7 @@ function getadvCard(adv) {
   if (adv.author.avatar) {
     card.querySelector('.popup__avatar').src = adv.author.avatar;
   } else {
-    setObjectAttribute(card.querySelector('.popup__avatar'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__avatar').hidden = true;
   }
 
   // кнопка "Закрыть"
@@ -510,6 +512,16 @@ function getadvCard(adv) {
   document.addEventListener('keydown', onDocKeyDown);
 
   return card;
+}
+
+function removeAllPins() {
+  var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
+
+  for (var i = 0; i < mapPins.length; i++) {
+    if (!mapPins[i].classList.contains('map__pin--main')) {
+      mapPins[i].remove();
+    }
+  }
 }
 
 // показ похожих объявлений
@@ -531,13 +543,7 @@ function showSimilarAds() {
 
   // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
   // 3.1. Чистка блока от старых пинов
-  var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
-
-  for (var i = 0; i < mapPins.length; i++) {
-    if (!mapPins[i].classList.contains('map__pin--main')) {
-      mapPins[i].remove();
-    }
-  }
+  removeAllPins();
 
   // 3.2. Добавляем в блок
   document.querySelector('.map__pins').appendChild(pinContainer);
@@ -596,7 +602,7 @@ function toggleFilterFormAbility(isEnabled) {
     adFormFieldSets[i].disabled = !isEnabled;
   }
 
-  // block fieldset element - there is just one in the whole document, so cycle isn't needed
+  // block fieldset element
   document.querySelector('.map__filters').querySelector('fieldset').disabled = !isEnabled;
 }
 
@@ -726,20 +732,34 @@ function setCapacity(key) {
 function processRoomChange(roomElement) {
   var options = roomElement.querySelectorAll('option');
   if (options.length > 0 & roomElement.selectedIndex >= 0) {
-    setCapacity(parseInt(roomElement[roomElement.selectedIndex].value, 10));    clearAllInputs();  // УРАТЬ !!!!!!!!!!!!!!!!!!!!!!!!!**************************!!!!!!!!!!!!!!!!!!!
+    setCapacity(parseInt(roomElement[roomElement.selectedIndex].value, 10));
   }
 }
 
 // очистка поей
 function clearAllInputs() {
+  // заголовок
   document.querySelector('.ad-form').querySelector('#title').value = '';
+
+  // тип и цена (по умолчанию выберем Квартира = 1000)
   document.querySelector('.ad-form').querySelector('#price').value = '';
-  document.querySelector('.ad-form').querySelector('#type').selectedIndex = -1;
-  document.querySelector('.ad-form').querySelector('#address').value = '';
-  document.querySelector('.ad-form').querySelector('#timein').selectedIndex = -1;
-  document.querySelector('.ad-form').querySelector('#timeout').selectedIndex = -1;
-  document.querySelector('.ad-form').querySelector('#room_number').selectedIndex = -1;
+  document.querySelector('.ad-form').querySelector('#type').selectedIndex = 1;
+  processDwellTypeChange(document.querySelector('.ad-form').querySelector('#type'));
+
+  // кол-во комнат и кол-во мест
+  // по умолчанию установим максимально (3 комнаты для 1, 2, 3 гостей)
+  document.querySelector('.ad-form').querySelector('#room_number').selectedIndex = 2;
   document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
+  processRoomChange(document.querySelector('.ad-form').querySelector('#room_number'));
+
+  // время заезда - выезда
+  document.querySelector('.ad-form').querySelector('#timein').selectedIndex = 0;
+  document.querySelector('.ad-form').querySelector('#timeout').selectedIndex = 0;
+
+  // адрес - очистим от сарых значений (установка в отдельной ф-ии)
+  document.querySelector('.ad-form').querySelector('#address').value = '';
+
+  // описание
   document.querySelector('.ad-form').querySelector('#description').value = '';
 
   // особенности
@@ -750,9 +770,29 @@ function clearAllInputs() {
     }
   }
 
-  // очистка фото аватара
+  // очистка фото аватара - как именно чистить это поле?
 
-  // очистка фото жилья
+  // очистка фото жилья - как именно чистить это поле?
+
+}
+
+function onButtonResetClick() {
+  processResetButtonClick();
+}
+
+// обработка reset
+function processResetButtonClick() {
+  // уберем похожие объявления
+  removeOldAds();
+
+  // очистим пины
+  removeAllPins();
+
+  // уберем событие на кнопке reset, так как оно инициализируется в initMap
+  document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
+
+  // инициализируем
+  initMap();
 
 }
 
@@ -760,6 +800,11 @@ function clearAllInputs() {
 function setRulesForInputFields() {
   // форма
   var adForm = document.querySelector('.ad-form');
+  //  ТЗ: в шестом разделе мы выполним задание, в котором мы перепишем механизм отправки данных, но пока что, достаточно убедиться, что у соответствующих тегов form прописаны правильные атрибуты
+  // можно убедиться "глазами", ради треннировки убедимся программно
+  adForm.action = adForm.action === FORM_ACTION ? adForm.action : FORM_ACTION;
+  adForm.method = adForm.method === FORM_METHOD ? adForm.method : FORM_METHOD;
+  adForm.enctype = adForm.enctype === FORM_ENCTYPE ? adForm.enctype : FORM_ENCTYPE;
 
   // 1. Заголовок объявления
   // ТЗ:
@@ -809,7 +854,7 @@ function setRulesForInputFields() {
     processRoomChange(evt.currentTarget);
   });
 
-  // 7. Оистим все поля ввода
+  // 7. Очистим все поля ввода и установим дефолтные значения
   clearAllInputs();
 
 }
@@ -846,6 +891,9 @@ function initMap() {
   mainPinMiddleY = mainPinTop + Math.round((mainPinHeight / 2)); // только целые?
 
   getAddressStr(mainPinMiddleX, mainPinMiddleY);
+
+  // кнопка reset
+  document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
 
 }
 
