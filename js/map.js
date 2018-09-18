@@ -4,6 +4,11 @@
 // var KEY_RETURN = 13;
 var KEY_ESCAPE = 27;
 
+// форма
+var FORM_ACTION = 'https://js.dump.academy/keksobooking';
+var FORM_METHOD = 'post';
+var FORM_ENCTYPE = 'multipart/form-data';
+
 // шаблон адреса картинки аватара
 var STR_AVATAR_ADDR = 'img/avatars/user{{xx}}.png';
 
@@ -39,9 +44,6 @@ var mainPinFullHeight = mainPinHeight + mainPinTail;
 
 // pin ID
 var PIN_ID = 'pinid';
-
-// hidden
-var ATTR_HIDDEN = 'hidden';
 
 // массив объявлений
 var ads = [];
@@ -87,12 +89,39 @@ var titleDataSave = titleData.slice(); // для хранения при нов�
 // массив типов жилья
 var dwellingTypes = ['palace', 'flat', 'house', 'bungalo'];
 var dwellingTypesRus = ['Дворец', 'Квартира', 'Дом', 'Бунгало'];
+var dwellingMinPrice = [
+  {key: 0, value: 10000},
+  {key: 1, value: 1000},
+  {key: 2, value: 5000},
+  {key: 3, value: 0}
+];
 
 // массив значений времени заселения/выселения
 var timeCheckArray = ['12:00', '13:00', '14:00'];
 
 // массив строк особенностей жилья
 var dwellingFeatures = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
+
+// массив соответствий кол-ва комнат кол-ву жильцов (жестко соответствует значениям поля value эл-в room_number и capacity)
+var marRoomCapArray = [
+  {
+    key: 1,
+    value: [1]
+  },
+  {
+    key: 2,
+    value: [1, 2]
+  },
+  {
+    key: 3,
+    value: [1, 2, 3]
+  },
+  {
+    key: 100,
+    value: [0]
+  }
+];
+
 
 // ф- ия возвращает строку со случайно выбранным адресом аватара, если все адреса разобраны, возвращает пустую строку (по идее, надо генерить исключение, все номера разобраны)
 function getAvatarImagePath() {
@@ -242,9 +271,7 @@ function getAttributeValue(element, attrName) {
       value = element.attributes[i].value;
     }
   }
-
   return value;
-
 }
 
 // чистка от прежних объявлений
@@ -358,7 +385,7 @@ function fillFeatures(features, featArr) {
   }
 
   if (feature.length === 0) {
-    setObjectAttribute(features, ATTR_HIDDEN, '');
+    feature.hidden = true;
   }
 
 }
@@ -383,7 +410,7 @@ function fillPhoto(photos, photoArr) {
   }
 
   if (photo.length === 0) {
-    setObjectAttribute(photos, ATTR_HIDDEN, '');
+    photo.hidden = true;
   }
 
 
@@ -420,37 +447,37 @@ function getadvCard(adv) {
   if (adv.offer.title) {
     card.querySelector('.popup__title').textContent = adv.offer.title;
   } else {
-    setObjectAttribute(card.querySelector('.popup__title'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__title').hidden = true;
   }
 
   if (adv.offer.address) {
     card.querySelector('.popup__text--address').textContent = adv.offer.address;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--address'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--address').hidden = true;
   }
 
   if (adv.offer.price) {
     card.querySelector('.popup__text--price').textContent = adv.offer.price + '₽/ночь';
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--price'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--price').hidden = true;
   }
 
   if (adv.offer.type) {
     card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
   } else {
-    setObjectAttribute(card.querySelector('.popup__type'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__type').hidden = true;
   }
 
   if (strCapacity) {
     card.querySelector('.popup__text--capacity').textContent = strCapacity;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--capacity'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--capacity').hidden = true;
   }
 
   if (strCheckInOut) {
     card.querySelector('.popup__text--time').textContent = strCheckInOut;
   } else {
-    setObjectAttribute(card.querySelector('.popup__text--time'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__text--time').hidden = true;
   }
 
   // доступные удобства
@@ -460,7 +487,7 @@ function getadvCard(adv) {
   if (adv.offer.description) {
     card.querySelector('.popup__description').textContent = adv.offer.description;
   } else {
-    setObjectAttribute(card.querySelector('.popup__description'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__description').hidden = true;
   }
 
   // фото
@@ -471,7 +498,7 @@ function getadvCard(adv) {
   if (adv.author.avatar) {
     card.querySelector('.popup__avatar').src = adv.author.avatar;
   } else {
-    setObjectAttribute(card.querySelector('.popup__avatar'), ATTR_HIDDEN, '');
+    card.querySelector('.popup__avatar').hidden = true;
   }
 
   // кнопка "Закрыть"
@@ -485,6 +512,16 @@ function getadvCard(adv) {
   document.addEventListener('keydown', onDocKeyDown);
 
   return card;
+}
+
+function removeAllPins() {
+  var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
+
+  for (var i = 0; i < mapPins.length; i++) {
+    if (!mapPins[i].classList.contains('map__pin--main')) {
+      mapPins[i].remove();
+    }
+  }
 }
 
 // показ похожих объявлений
@@ -506,13 +543,7 @@ function showSimilarAds() {
 
   // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
   // 3.1. Чистка блока от старых пинов
-  var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
-
-  for (var i = 0; i < mapPins.length; i++) {
-    if (!mapPins[i].classList.contains('map__pin--main')) {
-      mapPins[i].remove();
-    }
-  }
+  removeAllPins();
 
   // 3.2. Добавляем в блок
   document.querySelector('.map__pins').appendChild(pinContainer);
@@ -520,20 +551,20 @@ function showSimilarAds() {
 }
 
 // тестовая инициализация карты
-function initMapTest() {
-  // 1. Уберем класс .map--faded
-  // var map = document.querySelector('.map');
-  // map.classList.remove('map--faded');
+// function initMapTest() {
+// 1. Уберем класс .map--faded
+// var map = document.querySelector('.map');
+// map.classList.remove('map--faded');
 
-  // showSimilarAds();
+// showSimilarAds();
 
-  // // 4. Объявление
-  // var advCard = getadvCard(ads[0]);
+// // 4. Объявление
+// var advCard = getadvCard(ads[0]);
 
-  // // 5. Вставим перед в блок .map блоком .map__filters-container
-  // map.insertBefore(advCard, map.querySelector('.map__filters-container'));
+// // 5. Вставим перед в блок .map блоком .map__filters-container
+// map.insertBefore(advCard, map.querySelector('.map__filters-container'));
 
-}
+// }
 
 // ф-ия блокирует/разблокирует карту
 function toggleMapAbility(isNotFaded) {
@@ -571,7 +602,7 @@ function toggleFilterFormAbility(isEnabled) {
     adFormFieldSets[i].disabled = !isEnabled;
   }
 
-  // block fieldset element - there is just one in the whole document, so cycle isn't needed
+  // block fieldset element
   document.querySelector('.map__filters').querySelector('fieldset').disabled = !isEnabled;
 }
 
@@ -613,6 +644,221 @@ function onMainPinMouseUp(evt) {
   evt.currentTarget.removeEventListener('mouseup', onMainPinMouseUp);
 }
 
+// возвращает мин цену жилья
+function getMinDwellPrice(dwellName) {
+  var res = -1;
+  for (var i = 0; i <= dwellingTypes.length; i++) {
+    if (dwellingTypes[i] === dwellName) {
+      for (var ind = 0; ind < dwellingMinPrice.length; ind++) {
+        if (dwellingMinPrice[ind].key === i) {
+          res = dwellingMinPrice[i].value;
+          break;
+        }
+      }
+    }
+  }
+
+  // нужна проверка на >= 0 и если нет - raise exception
+  return res;
+}
+
+// обработка события на выбор типа жилья
+function processDwellTypeChange(selectDwelType) {
+  var options = selectDwelType.querySelectorAll('option');
+  if (options.length > 0 & selectDwelType.selectedIndex >= 0) {
+    var option = options[selectDwelType.selectedIndex];
+    var adPrice = document.querySelector('.ad-form').querySelector('#price');
+    adPrice.min = getMinDwellPrice(option.value);
+    adPrice.placeholder = adPrice.min;
+  }
+}
+
+// установка элемента времени выезда/заезда
+function setCheckTime(index, id) {
+  var localId = id === 'timein' ? '#timeout' : '#timein';
+  var checkTimeOptions = document.querySelector('.ad-form').querySelector(localId).querySelectorAll('option');
+  checkTimeOptions[index].selected = true;
+}
+
+// обработка события на выбор времени заезда/выезда
+function processCheckInOutTime(checkInOut) {
+  var id = checkInOut.id;
+  var options = checkInOut.querySelectorAll('option');
+  if (options.length > 0 & checkInOut.selectedIndex >= 0) {
+    setCheckTime(checkInOut.selectedIndex, id);
+  }
+}
+
+// установка опций выбора количества гостей
+function setCapacity(key) {
+  var vals = [];
+
+  for (var i = 0; i < marRoomCapArray.length; i++) {
+    if (marRoomCapArray[i].key === key) {
+      vals = marRoomCapArray[i].value;
+      break;
+    }
+  }
+
+  if (vals.length > 0) {
+    // установка кол-ва гостей
+    var localCapOptions = document.querySelector('.ad-form').querySelector('#capacity').querySelectorAll('option');
+
+    // уберем все элементы
+    for (i = 0; i < localCapOptions.length; i++) {
+      localCapOptions[i].hidden = true;
+      localCapOptions[i].selected = false;
+    }
+
+    // ничего не выбрано
+    document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
+
+    // добавим только нужные
+    for (i = 0; i < vals.length; i++) {
+      for (var ind = 0; ind < localCapOptions.length; ind++) {
+        if (parseInt(localCapOptions[ind].value, 10) === vals[i]) {
+
+          localCapOptions[ind].hidden = false;
+          localCapOptions[ind].selected = true; // объект сам переключает seleted у элемента (т.е. выбран будет только один)
+
+        }
+      }
+    }
+
+  }
+}
+
+// обработка события на выбор кол-ва комнат
+function processRoomChange(roomElement) {
+  var options = roomElement.querySelectorAll('option');
+  if (options.length > 0 & roomElement.selectedIndex >= 0) {
+    setCapacity(parseInt(roomElement[roomElement.selectedIndex].value, 10));
+  }
+}
+
+// очистка поей
+function clearAllInputs() {
+  // заголовок
+  document.querySelector('.ad-form').querySelector('#title').value = '';
+
+  // тип и цена (по умолчанию выберем Квартира = 1000)
+  document.querySelector('.ad-form').querySelector('#price').value = '';
+  document.querySelector('.ad-form').querySelector('#type').selectedIndex = 1;
+  processDwellTypeChange(document.querySelector('.ad-form').querySelector('#type'));
+
+  // кол-во комнат и кол-во мест
+  // по умолчанию установим максимально (3 комнаты для 1, 2, 3 гостей)
+  document.querySelector('.ad-form').querySelector('#room_number').selectedIndex = 2;
+  document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
+  processRoomChange(document.querySelector('.ad-form').querySelector('#room_number'));
+
+  // время заезда - выезда
+  document.querySelector('.ad-form').querySelector('#timein').selectedIndex = 0;
+  document.querySelector('.ad-form').querySelector('#timeout').selectedIndex = 0;
+
+  // адрес - очистим от сарых значений (установка в отдельной ф-ии)
+  document.querySelector('.ad-form').querySelector('#address').value = '';
+
+  // описание
+  document.querySelector('.ad-form').querySelector('#description').value = '';
+
+  // особенности
+  var features = document.querySelector('.features').querySelectorAll('input');
+  for (var i = 0; i < features.length; i++) {
+    if (features[i].type === 'checkbox') {
+      features[i].checked = false;
+    }
+  }
+
+  // очистка фото аватара - как именно чистить это поле?
+
+  // очистка фото жилья - как именно чистить это поле?
+
+}
+
+function onButtonResetClick() {
+  processResetButtonClick();
+}
+
+// обработка reset
+function processResetButtonClick() {
+  // уберем похожие объявления
+  removeOldAds();
+
+  // очистим пины
+  removeAllPins();
+
+  // уберем событие на кнопке reset, так как оно инициализируется в initMap
+  document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
+
+  // инициализируем
+  initMap();
+
+}
+
+// ф-ия проверяет и установливает ограничения на поля ввода
+function setRulesForInputFields() {
+  // форма
+  var adForm = document.querySelector('.ad-form');
+  //  ТЗ: в шестом разделе мы выполним задание, в котором мы перепишем механизм отправки данных, но пока что, достаточно убедиться, что у соответствующих тегов form прописаны правильные атрибуты
+  // можно убедиться "глазами", ради треннировки убедимся программно
+  adForm.action = adForm.action === FORM_ACTION ? adForm.action : FORM_ACTION;
+  adForm.method = adForm.method === FORM_METHOD ? adForm.method : FORM_METHOD;
+  adForm.enctype = adForm.enctype === FORM_ENCTYPE ? adForm.enctype : FORM_ENCTYPE;
+
+  // 1. Заголовок объявления
+  // ТЗ:
+  //  обязательное текстовое поле;
+  //  минимальная длина — 30 символов;
+  //  максимальная длина — 100 символов;
+  var adTitle = adForm.querySelector('#title');
+  adTitle.required = true;
+  adTitle.minLength = '30';
+  adTitle.maxLength = '100';
+
+  // 2. Цена за ночь:
+  // обязательное поле;
+  // числовое поле;
+  // максимальное значение — 1000000;
+  var adPrice = adForm.querySelector('#price');
+  adPrice.required = true;
+  adPrice.type = 'number';
+  adPrice.max = 1000000;
+
+  // 3. Поле «Тип жилья» влияет на минимальное значение поля «Цена за ночь»
+  var adDwellType = adForm.querySelector('#type');
+  adDwellType.addEventListener('change', function (evt) {
+    processDwellTypeChange(evt.currentTarget);
+  });
+
+  // 4. Адрес. Ручное редактирование поля запрещено.
+  var adAddress = adForm.querySelector('#address');
+  adAddress.readOnly = true;
+
+  // 5. Поля «Время заезда» и «Время выезда» синхронизированы
+  // поле timeIn
+  var adCheckIn = adForm.querySelector('#timein');
+  adCheckIn.addEventListener('change', function (evt) {
+    processCheckInOutTime(evt.currentTarget);
+  });
+
+  // поле timeOut
+  var adCheckOut = adForm.querySelector('#timeout');
+  adCheckOut.addEventListener('change', function (evt) {
+    processCheckInOutTime(evt.currentTarget);
+  });
+
+  // 6. Поле «Количество комнат» синхронизировано с полем «Количество мест»
+  var adRoomNumber = adForm.querySelector('#room_number');
+  adRoomNumber.addEventListener('change', function (evt) {
+    processRoomChange(evt.currentTarget);
+  });
+
+  // 7. Очистим все поля ввода и установим дефолтные значения
+  clearAllInputs();
+
+}
+
 
 // инициализация
 function initMap() {
@@ -622,6 +868,9 @@ function initMap() {
   // все <input> и <select> формы .ad-form заблокированы с помощью атрибута disabled, добавленного на них или на их родительские блоки fieldset.
   // форма с фильтрами .map__filters заблокирована так же, как и форма .ad-form
   toggleMainFormActivity(false);
+
+  // проверка и установка ограничений на поля ввода
+  setRulesForInputFields();
 
   // главная метка
   var mainPin = document.querySelector('.map__pin--main');
@@ -643,12 +892,15 @@ function initMap() {
 
   getAddressStr(mainPinMiddleX, mainPinMiddleY);
 
+  // кнопка reset
+  document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
+
 }
 
 
 // Точка входа
 // Вынес предыдущие вывод меток и активацию карты в отдельный метод для теста, если пригодится потом
-initMapTest();
+// initMapTest();
 
 // Инициализация
 initMap();
