@@ -117,7 +117,7 @@ var marRoomCapArray = [
     value: [1, 2, 3]
   },
   {
-    key: 100,
+    key: 100,    
     value: [0]
   }
 ];
