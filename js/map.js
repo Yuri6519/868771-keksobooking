@@ -4,6 +4,9 @@
 // var KEY_RETURN = 13;
 var KEY_ESCAPE = 27;
 
+// главная метка
+var mainPin = document.querySelector('.map__pin--main');
+
 // форма
 var FORM_ACTION = 'https://js.dump.academy/keksobooking';
 var FORM_METHOD = 'post';
@@ -638,10 +641,81 @@ function processMainPinMouseUp() {
   showSimilarAds();
 }
 
-// событие щелчка на главной метке
+// событие mouseup на главной метке
 function onMainPinMouseUp(evt) {
   processMainPinMouseUp();
   evt.currentTarget.removeEventListener('mouseup', onMainPinMouseUp);
+}
+
+// событие mousemove на главной метке
+// function onMainPinMouseMove(evt) {
+// }
+
+
+// событие mousedown на главной метке
+function onMainPinMouseDown(evt) {
+  evt.preventDefault();
+
+  // запомнили координаты курсора в момент нажатия
+  var startPos = {
+    x: evt.clientX,
+    y: evt.clientY
+  };
+
+
+
+
+  // обработка движения мыши
+  function onMouseMove(evtMove) {
+    evtMove.preventDefault();
+
+    // перемещение
+    var shiftPos = {
+      x: startPos.x - evtMove.clientX,
+      y: startPos.y - evtMove.clientY
+    };
+
+    // новые координаты курсора
+    startPos.x = evtMove.clientX;
+    startPos.y = evtMove.clientY;
+
+    // отрисовка нового положения метки
+    mainPin.style.left = (mainPin.offsetLeft - shiftPos.x) + 'px';
+    mainPin.style.top = (mainPin.offsetTop - shiftPos.y) + 'px';
+
+    // mainPin.style.left = (mainPin.style.left - shiftPos.x) + 'px';
+    // mainPin.style.top = (mainPin.style.top - shiftPos.y) + 'px';
+
+    console.log(mainPin.style.left);
+    console.log(mainPin.style.top);
+    console.log(mainPin.offsetLeft);
+    console.log(mainPin.offsetTop);
+  
+
+  }
+
+
+  //
+  function onMouseUp(evtUp) {
+    evtUp.preventDefault();
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  
+  }
+
+
+
+
+
+
+  // регистрация события mouseup на главной метке
+  // mainPin.addEventListener('mouseup', onMainPinMouseUp);
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+  
+  
 }
 
 // возвращает мин цену жилья
@@ -872,11 +946,8 @@ function initMap() {
   // проверка и установка ограничений на поля ввода
   setRulesForInputFields();
 
-  // главная метка
-  var mainPin = document.querySelector('.map__pin--main');
-
-  // регистрация события mouseup на главной метке
-  mainPin.addEventListener('mouseup', onMainPinMouseUp);
+  // регистрация события mousedown на главной метке
+  mainPin.addEventListener('mousedown', onMainPinMouseDown);
 
   // начальное значение поля address ТЗ:
   // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
