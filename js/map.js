@@ -4,6 +4,12 @@
 // var KEY_RETURN = 13;
 var KEY_ESCAPE = 27;
 
+// главная метка
+var mainPin = document.querySelector('.map__pin--main');
+
+// карта
+var adForm = document.querySelector('.ad-form');
+
 // форма
 var FORM_ACTION = 'https://js.dump.academy/keksobooking';
 var FORM_METHOD = 'post';
@@ -23,7 +29,7 @@ var STR_CHECK_IN_OUT = 'Заезд после {{offer.checkin}}, выезд до
 
 // обычная метка - pin
 var PIN_WIDTH = 50;
-var PIN_HEIGHT = 70;
+// var PIN_HEIGHT = 70;
 
 // переменная для хранения левого верхнего угла главной метки - left
 var mainPinLeft;
@@ -48,11 +54,17 @@ var PIN_ID = 'pinid';
 // массив объявлений
 var ads = [];
 
+// карта
+var MAP_MIN_LEFT = 0;
+var MAP_MAX_LENGTH = 1199;
+var MAP_MIN_TOP = 130;
+var MAP_MAX_HEIGHT = 630;
+
 // location
 var LOCATION_MIN_X = 1 + Math.round(PIN_WIDTH / 2); // минимальная координаты плюс половина ширины метки (чтобы не уходила за край)
-var LOCATION_MAX_X = 1199 - Math.round(PIN_WIDTH / 2); // максимальная длина карты минус половина ширины метки  (чтобы не уходила за край)
-var LOCATION_MIN_Y = 130;
-var LOCATION_MAX_Y = 630;
+var LOCATION_MAX_X = MAP_MAX_LENGTH - Math.round(PIN_WIDTH / 2); // максимальная длина карты минус половина ширины метки  (чтобы не уходила за край)
+var LOCATION_MIN_Y = MAP_MIN_TOP;
+var LOCATION_MAX_Y = MAP_MAX_HEIGHT;
 
 // price
 var PRICE_MIN = 1000;
@@ -122,6 +134,7 @@ var marRoomCapArray = [
   }
 ];
 
+var isMouseUp = false;
 
 // ф- ия возвращает строку со случайно выбранным адресом аватара, если все адреса разобраны, возвращает пустую строку (по идее, надо генерить исключение, все номера разобраны).
 function getAvatarImagePath() {
@@ -314,7 +327,7 @@ function createPin(index, pinObject, template) {
   // Кнопка
   var button = pin.querySelector('.map__pin');
   button.style.left = (pinObject.location.x - Math.round(PIN_WIDTH / 2)) + 'px'; // с учетом размеров самого пина
-  button.style.top = (pinObject.location.y - PIN_HEIGHT) + 'px'; // с учетом размеров самого пина
+  button.style.top = (pinObject.location.y) + 'px';
 
   // добавим ИД элемента для связки с событием
   setObjectAttribute(button, PIN_ID, index);
@@ -579,8 +592,6 @@ function toggleMapAbility(isNotFaded) {
 
 // ф-ия блокирует/разблокирует форму добавления объявления
 function toggleAdFormAbility(isEnabled) {
-  // form
-  var adForm = document.querySelector('.ad-form');
   if (isEnabled) {
     adForm.classList.remove('ad-form--disabled');
   } else {
@@ -614,34 +625,112 @@ function toggleMainFormActivity(isActive) {
 }
 
 function getAddressStr(addrX, addrY) {
-  document.querySelector('.ad-form').querySelector('#address').value = addrX + ', ' + addrY;
+  adForm.querySelector('#address').value = addrX + ', ' + addrY;
 }
 
 // установка значения адреса (острый конец метки)
-function setAddress() {
-  // evt использоваться будет далее (скорее всего) для определения координат курсора мыши
-  // сейчас нет перетаскивания, считаем координаты неизменными
-  // var mainPin = document.querySelector('.map__pin--main');
+function setAddress(mainPinNewLeft, mainPinNewRight) {
 
-  // координаты хвоста относительно верхнего левого угла без учета движения мыши
-  var tailX = mainPinLeft + Math.round(mainPinWidth / 2);
-  var tailY = mainPinTop + mainPinFullHeight;
+  // координаты хвоста относительно верхнего левого угла
+  var tailX = mainPinNewLeft + Math.round(mainPinWidth / 2);
+  var tailY = mainPinNewRight + mainPinFullHeight;
 
   getAddressStr(tailX, tailY);
 }
 
-// Обработка mouseup на главной метке
-function processMainPinMouseUp() {
-  removeOldAds();
-  toggleMainFormActivity(true);
-  setAddress();
-  showSimilarAds();
+function setFormActive() {
+  if (adForm.classList.contains('ad-form--disabled')) {
+    // лишний раз не вызываем
+    toggleMainFormActivity(true);
+  }
+
 }
 
-// событие щелчка на главной метке
-function onMainPinMouseUp(evt) {
-  processMainPinMouseUp();
-  evt.currentTarget.removeEventListener('mouseup', onMainPinMouseUp);
+// событие mousedown на главной метке
+function onMainPinMouseDown(evt) {
+  evt.preventDefault();
+
+  // запомнили координаты курсора в момент нажатия
+  var startPos = {
+    x: evt.clientX,
+    y: evt.clientY
+  };
+
+  // верхний левый угол метки
+  var newConerPos = {
+    x: mainPinLeft,
+    y: mainPinTop
+  };
+
+  // обработка движения мыши
+  function onMouseMove(evtMove) {
+    evtMove.preventDefault();
+
+    // перемещение
+    var shiftPos = {
+      x: startPos.x - evtMove.clientX,
+      y: startPos.y - evtMove.clientY
+    };
+
+    // новые координаты курсора
+    startPos.x = evtMove.clientX;
+    startPos.y = evtMove.clientY;
+
+    // Новые координаты верхнего левого угла метки, именно на них поставил ограничение
+    // x
+    var shiftLeft = (mainPin.offsetLeft - shiftPos.x);
+    shiftLeft = shiftLeft >= MAP_MIN_LEFT - Math.round(mainPinWidth / 2) ? shiftLeft : MAP_MIN_LEFT - Math.round(mainPinWidth / 2);
+    shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= MAP_MAX_LENGTH ? shiftLeft : MAP_MAX_LENGTH - Math.round(mainPinWidth / 2);
+    // y
+    var shifTop = (mainPin.offsetTop - shiftPos.y);
+    shifTop = shifTop >= MAP_MIN_TOP ? shifTop : MAP_MIN_TOP;
+    shifTop = shifTop <= MAP_MAX_HEIGHT ? shifTop : MAP_MAX_HEIGHT;
+
+    newConerPos = {
+      x: shiftLeft,
+      y: shifTop
+    };
+
+    // отрисовка нового положения метки
+    mainPin.style.left = newConerPos.x + 'px';
+    mainPin.style.top = newConerPos.y + 'px';
+
+    // активация карты. ТЗ: первое перемещение метки переводит страницу в активное состояние.
+    // уберем дрожание мыши иил тачпада
+    if (Math.abs(shiftPos.x) >= 1 | Math.abs(shiftPos.y >= 1)) {
+      setFormActive();
+    }
+
+    // адрес
+    setAddress(newConerPos.x, newConerPos.y);
+
+  }
+
+  // событие mouseup
+  function onMouseUp(evtUp) {
+    evtUp.preventDefault();
+
+    // активируем форму
+    setFormActive();
+
+    // покажем похожие метки - один раз
+    if (!isMouseUp) {
+      removeOldAds();
+      showSimilarAds();
+      isMouseUp = !isMouseUp;
+    }
+
+    // адрес
+    setAddress(newConerPos.x, newConerPos.y);
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+
+  }
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+
 }
 
 // возвращает мин цену жилья
@@ -667,7 +756,7 @@ function processDwellTypeChange(selectDwelType) {
   var options = selectDwelType.querySelectorAll('option');
   if (options.length > 0 & selectDwelType.selectedIndex >= 0) {
     var option = options[selectDwelType.selectedIndex];
-    var adPrice = document.querySelector('.ad-form').querySelector('#price');
+    var adPrice = adForm.querySelector('#price');
     adPrice.min = getMinDwellPrice(option.value);
     adPrice.placeholder = adPrice.min;
   }
@@ -676,7 +765,7 @@ function processDwellTypeChange(selectDwelType) {
 // установка элемента времени выезда/заезда
 function setCheckTime(index, id) {
   var localId = id === 'timein' ? '#timeout' : '#timein';
-  var checkTimeOptions = document.querySelector('.ad-form').querySelector(localId).querySelectorAll('option');
+  var checkTimeOptions = adForm.querySelector(localId).querySelectorAll('option');
   checkTimeOptions[index].selected = true;
 }
 
@@ -702,7 +791,7 @@ function setCapacity(key) {
 
   if (vals.length > 0) {
     // установка кол-ва гостей
-    var localCapOptions = document.querySelector('.ad-form').querySelector('#capacity').querySelectorAll('option');
+    var localCapOptions = adForm.querySelector('#capacity').querySelectorAll('option');
 
     // уберем все элементы
     for (i = 0; i < localCapOptions.length; i++) {
@@ -711,7 +800,7 @@ function setCapacity(key) {
     }
 
     // ничего не выбрано
-    document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
+    adForm.querySelector('#capacity').selectedIndex = -1;
 
     // добавим только нужные
     for (i = 0; i < vals.length; i++) {
@@ -739,28 +828,28 @@ function processRoomChange(roomElement) {
 // очистка поей
 function clearAllInputs() {
   // заголовок
-  document.querySelector('.ad-form').querySelector('#title').value = '';
+  adForm.querySelector('#title').value = '';
 
   // тип и цена (по умолчанию выберем Квартира = 1000)
-  document.querySelector('.ad-form').querySelector('#price').value = '';
-  document.querySelector('.ad-form').querySelector('#type').selectedIndex = 1;
-  processDwellTypeChange(document.querySelector('.ad-form').querySelector('#type'));
+  adForm.querySelector('#price').value = '';
+  adForm.querySelector('#type').selectedIndex = 1;
+  processDwellTypeChange(adForm.querySelector('#type'));
 
   // кол-во комнат и кол-во мест
   // по умолчанию установим максимально (3 комнаты для 1, 2, 3 гостей)
-  document.querySelector('.ad-form').querySelector('#room_number').selectedIndex = 2;
-  document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
-  processRoomChange(document.querySelector('.ad-form').querySelector('#room_number'));
+  adForm.querySelector('#room_number').selectedIndex = 2;
+  adForm.querySelector('#capacity').selectedIndex = -1;
+  processRoomChange(adForm.querySelector('#room_number'));
 
   // время заезда - выезда
-  document.querySelector('.ad-form').querySelector('#timein').selectedIndex = 0;
-  document.querySelector('.ad-form').querySelector('#timeout').selectedIndex = 0;
+  adForm.querySelector('#timein').selectedIndex = 0;
+  adForm.querySelector('#timeout').selectedIndex = 0;
 
   // адрес - очистим от сарых значений (установка в отдельной ф-ии)
-  document.querySelector('.ad-form').querySelector('#address').value = '';
+  adForm.querySelector('#address').value = '';
 
   // описание
-  document.querySelector('.ad-form').querySelector('#description').value = '';
+  adForm.querySelector('#description').value = '';
 
   // особенности
   var features = document.querySelector('.features').querySelectorAll('input');
@@ -798,8 +887,6 @@ function processResetButtonClick() {
 
 // ф-ия проверяет и установливает ограничения на поля ввода
 function setRulesForInputFields() {
-  // форма
-  var adForm = document.querySelector('.ad-form');
   //  ТЗ: в шестом разделе мы выполним задание, в котором мы перепишем механизм отправки данных, но пока что, достаточно убедиться, что у соответствующих тегов form прописаны правильные атрибуты
   // можно убедиться "глазами", ради треннировки убедимся программно
   adForm.action = adForm.action === FORM_ACTION ? adForm.action : FORM_ACTION;
@@ -872,11 +959,8 @@ function initMap() {
   // проверка и установка ограничений на поля ввода
   setRulesForInputFields();
 
-  // главная метка
-  var mainPin = document.querySelector('.map__pin--main');
-
-  // регистрация события mouseup на главной метке
-  mainPin.addEventListener('mouseup', onMainPinMouseUp);
+  // регистрация события mousedown на главной метке
+  mainPin.addEventListener('mousedown', onMainPinMouseDown);
 
   // начальное значение поля address ТЗ:
   // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
