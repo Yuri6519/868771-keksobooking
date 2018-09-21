@@ -134,6 +134,7 @@ var marRoomCapArray = [
   }
 ];
 
+var isMouseUp = false;
 
 // ф- ия возвращает строку со случайно выбранным адресом аватара, если все адреса разобраны, возвращает пустую строку (по идее, надо генерить исключение, все номера разобраны).
 function getAvatarImagePath() {
@@ -624,7 +625,7 @@ function toggleMainFormActivity(isActive) {
 }
 
 function getAddressStr(addrX, addrY) {
-  document.querySelector('.ad-form').querySelector('#address').value = addrX + ', ' + addrY;
+  adForm.querySelector('#address').value = addrX + ', ' + addrY;
 }
 
 // установка значения адреса (острый конец метки)
@@ -705,16 +706,19 @@ function onMainPinMouseDown(evt) {
 
   }
 
-  //
+  // событие mouseup
   function onMouseUp(evtUp) {
     evtUp.preventDefault();
 
     // активируем форму
     setFormActive();
 
-    // покажем похожие метки - при отпускании мыши всегда новые координаты, значит всегда новые похожие метки
-    removeOldAds();
-    showSimilarAds();
+    // покажем похожие метки - один раз
+    if (!isMouseUp) {
+      removeOldAds();
+      showSimilarAds();
+      isMouseUp = !isMouseUp;
+    }
 
     // адрес
     setAddress(newConerPos.x, newConerPos.y);
@@ -752,7 +756,7 @@ function processDwellTypeChange(selectDwelType) {
   var options = selectDwelType.querySelectorAll('option');
   if (options.length > 0 & selectDwelType.selectedIndex >= 0) {
     var option = options[selectDwelType.selectedIndex];
-    var adPrice = document.querySelector('.ad-form').querySelector('#price');
+    var adPrice = adForm.querySelector('#price');
     adPrice.min = getMinDwellPrice(option.value);
     adPrice.placeholder = adPrice.min;
   }
@@ -761,7 +765,7 @@ function processDwellTypeChange(selectDwelType) {
 // установка элемента времени выезда/заезда
 function setCheckTime(index, id) {
   var localId = id === 'timein' ? '#timeout' : '#timein';
-  var checkTimeOptions = document.querySelector('.ad-form').querySelector(localId).querySelectorAll('option');
+  var checkTimeOptions = adForm.querySelector(localId).querySelectorAll('option');
   checkTimeOptions[index].selected = true;
 }
 
@@ -787,7 +791,7 @@ function setCapacity(key) {
 
   if (vals.length > 0) {
     // установка кол-ва гостей
-    var localCapOptions = document.querySelector('.ad-form').querySelector('#capacity').querySelectorAll('option');
+    var localCapOptions = adForm.querySelector('#capacity').querySelectorAll('option');
 
     // уберем все элементы
     for (i = 0; i < localCapOptions.length; i++) {
@@ -796,7 +800,7 @@ function setCapacity(key) {
     }
 
     // ничего не выбрано
-    document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
+    adForm.querySelector('#capacity').selectedIndex = -1;
 
     // добавим только нужные
     for (i = 0; i < vals.length; i++) {
@@ -824,28 +828,28 @@ function processRoomChange(roomElement) {
 // очистка поей
 function clearAllInputs() {
   // заголовок
-  document.querySelector('.ad-form').querySelector('#title').value = '';
+  adForm.querySelector('#title').value = '';
 
   // тип и цена (по умолчанию выберем Квартира = 1000)
-  document.querySelector('.ad-form').querySelector('#price').value = '';
-  document.querySelector('.ad-form').querySelector('#type').selectedIndex = 1;
-  processDwellTypeChange(document.querySelector('.ad-form').querySelector('#type'));
+  adForm.querySelector('#price').value = '';
+  adForm.querySelector('#type').selectedIndex = 1;
+  processDwellTypeChange(adForm.querySelector('#type'));
 
   // кол-во комнат и кол-во мест
   // по умолчанию установим максимально (3 комнаты для 1, 2, 3 гостей)
-  document.querySelector('.ad-form').querySelector('#room_number').selectedIndex = 2;
-  document.querySelector('.ad-form').querySelector('#capacity').selectedIndex = -1;
-  processRoomChange(document.querySelector('.ad-form').querySelector('#room_number'));
+  adForm.querySelector('#room_number').selectedIndex = 2;
+  adForm.querySelector('#capacity').selectedIndex = -1;
+  processRoomChange(adForm.querySelector('#room_number'));
 
   // время заезда - выезда
-  document.querySelector('.ad-form').querySelector('#timein').selectedIndex = 0;
-  document.querySelector('.ad-form').querySelector('#timeout').selectedIndex = 0;
+  adForm.querySelector('#timein').selectedIndex = 0;
+  adForm.querySelector('#timeout').selectedIndex = 0;
 
   // адрес - очистим от сарых значений (установка в отдельной ф-ии)
-  document.querySelector('.ad-form').querySelector('#address').value = '';
+  adForm.querySelector('#address').value = '';
 
   // описание
-  document.querySelector('.ad-form').querySelector('#description').value = '';
+  adForm.querySelector('#description').value = '';
 
   // особенности
   var features = document.querySelector('.features').querySelectorAll('input');
