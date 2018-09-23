@@ -35,7 +35,6 @@
     return Math.round(Math.random().toFixed(1) * (maxValue - minValue) + minValue);
   }
 
-
   window.utils = {
     KEY_RETURN: KEY_RETURN,
     KEY_ESCAPE: KEY_ESCAPE,
@@ -47,7 +46,5 @@
 
 
   };
-
-  
 
 })();
