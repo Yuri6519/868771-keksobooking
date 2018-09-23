@@ -27,6 +27,12 @@
   // // обычная метка - pin
   // var PIN_WIDTH = 50;
 
+  // начальное положение метки- константа для инициализации X
+  var MAIN_PIN_INIT_LEFT = parseInt(mainPin.style.left, 10);
+
+  // начальное положение метки- константа для инициализации Y
+  var MAIN_PIN_INIT_TOP = parseInt(mainPin.style.top, 10);
+
   // переменная для хранения левого верхнего угла главной метки - left
   var mainPinLeft;
   // переменная для хранения левого верхнего угла главной метки - top
@@ -529,8 +535,6 @@
     // инициализация массива объектов объявлений
     window.data.initAds(8);
 
-console.log(window.data.getAds());    
-
     // 2. Создадим DOM элементы меток
     var pinContainer = createPins(window.data.getAds());
 
@@ -626,6 +630,12 @@ console.log(window.data.getAds());
 
   }
 
+  // отрисовка нового положения метки
+  function setMainPinPos(xPos, yPos) {
+    mainPin.style.left = xPos + 'px';
+    mainPin.style.top = yPos + 'px';
+  }
+
   // событие mousedown на главной метке
   function onMainPinMouseDown(evt) {
     evt.preventDefault();
@@ -672,8 +682,7 @@ console.log(window.data.getAds());
       };
 
       // отрисовка нового положения метки
-      mainPin.style.left = newConerPos.x + 'px';
-      mainPin.style.top = newConerPos.y + 'px';
+      setMainPinPos(newConerPos.x, newConerPos.y);
 
       // активация карты. ТЗ: первое перемещение метки переводит страницу в активное состояние.
       // уберем дрожание мыши иил тачпада
@@ -946,17 +955,20 @@ console.log(window.data.getAds());
     // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
 
     // верхний левый угол главной метки - left
-    mainPinLeft = parseInt(mainPin.style.left, 10);
+    mainPinLeft = MAIN_PIN_INIT_LEFT;
     // верхний левый угол главной метки - top
-    mainPinTop = parseInt(mainPin.style.top, 10);
+    mainPinTop = MAIN_PIN_INIT_TOP;
     // координата X середины главной метки
     mainPinMiddleX = mainPinLeft + Math.round(mainPinWidth / 2); // только целые?
     // координата Y середины главной метки
     mainPinMiddleY = mainPinTop + Math.round((mainPinHeight / 2)); // только целые?
-
+    // начальное положение главной метки
+    setMainPinPos(mainPinLeft, mainPinTop);
+    // начальная строка ареса
     getAddressStr(mainPinMiddleX, mainPinMiddleY);
 
-console.log('mainPinMiddleX=' + mainPinMiddleX + ', mainPinMiddleY=' + mainPinMiddleY);    
+    // отрисовка пинов - исходное состояние
+    isMouseUp = false;
 
     // кнопка reset
     document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
