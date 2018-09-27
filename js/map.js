@@ -4,6 +4,9 @@
   // главная метка
   var mainPin = document.querySelector('.map__pin--main');
 
+  // блок для вставки сообщений
+  var main = document.querySelector('main');
+
   // начальное положение главной метки- константа для инициализации X
   var MAIN_PIN_INIT_LEFT = parseInt(mainPin.style.left, 10);
 
@@ -71,7 +74,7 @@
   // callback на загрузку данных
   function cbSuccessLoadAds(data) {
 
-    // заполним маиисв объявлений данными с сервера
+    // заполним масив объявлений данными с сервера
     window.data.initRealAds(data);
 
     // покажем
@@ -87,7 +90,7 @@
     errElement.querySelector('.error__message').textContent = mes;
 
     // блок для вставки
-    var main = document.querySelector('main');
+    main = document.querySelector('main');
     main.appendChild(errElement);
 
     // обработка закрытия сообщения об ошибке
@@ -123,6 +126,96 @@
     var errBtn = errElement.querySelector('.error__button');
     errBtn.textContent = 'Закрыть';
 
+    errBtn.addEventListener('click', function () {
+      closeErrWindow();
+    });
+
+    document.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKeyDown);
+
+  }
+
+  // callback на сохранение данных
+  function cbSuccessSaveAds() {
+
+    // покажем сообщение об успешном размещении объявления
+    var successElement = document.querySelector('#success').content.querySelector('.success').cloneNode(true);
+
+    // блок для вставки
+    main = document.querySelector('main');
+    main.appendChild(successElement);
+
+    // обработка закрытия сообщения об ошибке
+    function closeSuccessWindow() {
+
+      // уберем сообщение об ошибке
+      var success = main.querySelector('.success');
+
+      if (success) {
+        success.remove();
+      }
+
+      // вернем страницу в изначальное положение
+      processResetButtonClick();
+
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKeyDown);
+    }
+
+    function onClick() {
+      closeSuccessWindow();
+    }
+
+    function onKeyDown(evt) {
+      if (evt.keyCode === window.utils.KEY_ESCAPE) {
+        closeSuccessWindow();
+      }
+    }
+
+    document.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKeyDown);
+
+  }
+
+  // callback на ошибку при загрузке данных с сервера
+  function cbErrorSaveAds(mes) {
+    // покажем ошибку
+    var errElement = document.querySelector('#error').content.querySelector('.error').cloneNode(true);
+    errElement.classList.add('error_on_save');
+    errElement.querySelector('.error__message').textContent = mes;
+
+    // блок для вставки
+    main = document.querySelector('main');
+    main.appendChild(errElement);
+
+    // обработка закрытия сообщения об ошибке
+    function closeErrWindow() {
+
+      // уберем сообщение об ошибке
+      var err = main.querySelector('.error_on_save');
+
+      if (err) {
+        err.remove();
+      }
+
+
+      document.removeEventListener('click', onClick);
+      document.removeEventListener('keydown', onKeyDown);
+
+    }
+
+    function onClick() {
+      closeErrWindow();
+    }
+
+    function onKeyDown(evt) {
+      if (evt.keyCode === window.utils.KEY_ESCAPE) {
+        closeErrWindow();
+      }
+    }
+
+    // кнопка
+    var errBtn = errElement.querySelector('.error__button');
     errBtn.addEventListener('click', function () {
       closeErrWindow();
     });
@@ -287,8 +380,18 @@
     // уберем событие на кнопке reset, так как оно инициализируется в initMap
     document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
 
+    // форма
+    window.form.adForm.removeEventListener('submit', onFormSubmit);
+
     // инициализируем
     initMap();
+
+  }
+
+  function onFormSubmit(evt) {
+    evt.preventDefault();
+
+    window.backend.saveData(new FormData(window.form.adForm), cbSuccessSaveAds, cbErrorSaveAds);
 
   }
 
@@ -328,6 +431,9 @@
 
     // кнопка reset
     document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
+
+    // отправка данных - форма
+    window.form.adForm.addEventListener('submit', onFormSubmit);
 
   }
 
