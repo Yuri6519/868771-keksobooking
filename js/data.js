@@ -1,4 +1,4 @@
-// модуль для создания тестовых данных
+// модуль для работы с данными
 
 'use strict';
 
@@ -181,9 +181,11 @@
   // ф-ия заполняет массив объявлений
   function fillAdsArray(num) {
     ads = [];
+
     for (var i = 0; i < num; i++) {
       ads[i] = createAdvertisementObject();
     }
+
   }
 
   // ф-ия возвращает русское название типа жилья
@@ -220,6 +222,8 @@
 
   // инициализирует массив объявлений
   function initAds(num) {
+
+    // тестовый режим
     // инициализируем, то что затерли
     if (avatarNums.length === 0) {
       avatarNums = avatarNumsSave.slice();
@@ -231,6 +235,12 @@
 
     fillAdsArray(num);
 
+  }
+
+  // заполняем массив объявлений реальными данными
+  function initRealAds(data) {
+    ads = [];
+    ads = data.slice();
   }
 
   // возвращает массив ads
@@ -249,8 +259,8 @@
     initAds: initAds,
     getDwellingTypeRus: getDwellingTypeRus,
     getMinDwellPrice: getMinDwellPrice,
-    getAds: getAds
-
+    getAds: getAds,
+    initRealAds: initRealAds
 
   };
 
