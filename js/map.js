@@ -138,6 +138,9 @@
   // callback на сохранение данных
   function cbSuccessSaveAds() {
 
+    // вернем страницу в изначальное положение
+    processResetButtonClick();
+
     // покажем сообщение об успешном размещении объявления
     var successElement = document.querySelector('#success').content.querySelector('.success').cloneNode(true);
 
@@ -145,7 +148,7 @@
     main = document.querySelector('main');
     main.appendChild(successElement);
 
-    // обработка закрытия сообщения об ошибке
+    // обработка закрытия сообщения об успешном сохранении данных
     function closeSuccessWindow() {
 
       // уберем сообщение об ошибке
@@ -154,9 +157,6 @@
       if (success) {
         success.remove();
       }
-
-      // вернем страницу в изначальное положение
-      processResetButtonClick();
 
       document.removeEventListener('click', onClick);
       document.removeEventListener('keydown', onKeyDown);
@@ -197,7 +197,6 @@
       if (err) {
         err.remove();
       }
-
 
       document.removeEventListener('click', onClick);
       document.removeEventListener('keydown', onKeyDown);

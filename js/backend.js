@@ -15,7 +15,7 @@
     processRequest(onLoad, onError, 'POST', url, data);
   }
 
-  // запросы GET И POST почти одинаковые и отличаются параметрами, поэтому сделал общий обработчик
+  // общий обработчик запросов к серверу
   function processRequest(onLoad, onError, method, reqUrl, data) {
     try {
       var req = new XMLHttpRequest();
