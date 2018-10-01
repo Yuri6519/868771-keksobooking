@@ -40,9 +40,9 @@
   var isMouseUp = false;
 
   // отрисовка меток похожих объявлений
-  function showAdsData() {
+  function showAdsData(filter) {
     // 2. Создадим DOM элементы меток
-    var pinContainer = window.pin.createPins(window.data.getAds());
+    var pinContainer = window.pin.createPins(window.data.getAds(filter));
 
     // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
     // 3.1. Чистка блока от старых пинов
@@ -59,6 +59,9 @@
 
   // callback на загрузку данных
   function cbSuccessLoadAds(data) {
+
+console.log(data);
+
 
     // заполним масив объявлений данными с сервера
     window.data.initRealAds(data);
@@ -380,6 +383,10 @@
 
   }
 
+  function cbFilterEvent(data) {
+    showAdsData(data);
+  }
+
   // инициализация
   function initMap() {
     // перевод формы в неактивное состояние
@@ -426,5 +433,8 @@
   // Точка входа
   // Инициализация
   initMap();
+
+  // Иниуиализация вормы фильтра
+  window.filter.initFilerForm(cbFilterEvent);
 
 })();
