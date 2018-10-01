@@ -31,6 +31,31 @@
     }
   ];
 
+  var dwellingMinPrice = [
+    {key: 0, value: 10000},
+    {key: 1, value: 1000},
+    {key: 2, value: 5000},
+    {key: 3, value: 0}
+  ];
+
+  // возвращает мин цену жилья в зависимости от типа жилья
+  function getMinDwellPrice(dwellName) {
+    var res = -1;
+    for (var i = 0; i <= window.card.dwellingTypes.length; i++) {
+      if (window.card.dwellingTypes[i] === dwellName) {
+        for (var ind = 0; ind < dwellingMinPrice.length; ind++) {
+          if (dwellingMinPrice[ind].key === i) {
+            res = dwellingMinPrice[i].value;
+            break;
+          }
+        }
+      }
+    }
+
+    // нужна проверка на >= 0 и если нет - raise exception
+    return res;
+  }
+
   // ф-ия блокирует/разблокирует форму добавления объявления
   function toggleAdFormAbility(isEnabled) {
     if (isEnabled) {
@@ -56,7 +81,7 @@
     if (options.length > 0 & selectDwelType.selectedIndex >= 0) {
       var option = options[selectDwelType.selectedIndex];
       var adPrice = adForm.querySelector('#price');
-      adPrice.min = window.data.getMinDwellPrice(option.value);
+      adPrice.min = getMinDwellPrice(option.value);
       adPrice.placeholder = adPrice.min;
     }
   }

@@ -10,6 +10,9 @@
   // шаблон времени заезда и выезда
   var STR_CHECK_IN_OUT = 'Заезд после {{offer.checkin}}, выезд до {{offer.checkout}}';
 
+  var dwellingTypes = ['palace', 'flat', 'house', 'bungalo'];
+  var dwellingTypesRus = ['Дворец', 'Квартира', 'Дом', 'Бунгало'];
+
   // чистка от прежних объявлений
   function removeOldAds() {
     var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
@@ -40,6 +43,19 @@
       room = 'гостя';
     }
     return room;
+  }
+
+  // ф-ия возвращает русское название типа жилья
+  function getDwellingTypeRus(typeStr) {
+    var res = '';
+
+    for (var i = 0; i < dwellingTypes.length; i++) {
+      if (dwellingTypes[i] === typeStr) {
+        res = dwellingTypesRus[i];
+        break;
+      }
+    }
+    return res;
   }
 
   function fillFeatures(features, featArr) {
@@ -115,7 +131,7 @@
     }
 
     if (adv.offer.type) {
-      card.querySelector('.popup__type').textContent = window.data.getDwellingTypeRus(adv.offer.type);
+      card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
     } else {
       card.querySelector('.popup__type').hidden = true;
     }
@@ -182,7 +198,8 @@
 
   window.card = {
     removeOldAds: removeOldAds,
-    getadvCard: getadvCard
+    getadvCard: getadvCard,
+    dwellingTypes: dwellingTypes
 
   };
 
