@@ -183,7 +183,7 @@
   }
 
   function procesCardBtnCloseClick() {
-    window.card.removeOldAds();
+    removeOldAds();
     window.pin.setPinNonactive();
     document.removeEventListener('keydown', onDocKeyDown);
   }

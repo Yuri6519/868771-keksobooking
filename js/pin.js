@@ -30,9 +30,8 @@
 
     // сделаем метку активной
     button.classList.add('map__pin--active');
-    
+
     // карточка
-    //var advCard = window.card.getadvCard(window.data.getAds()[pinId]);
     var advCard = window.card.getadvCard(window.data.getFilteredAdsById(pinId));
 
     // 5. Вставим перед в блок .map блоком .map__filters-container

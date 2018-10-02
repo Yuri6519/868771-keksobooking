@@ -59,10 +59,6 @@
 
   // callback на загрузку данных
   function cbSuccessLoadAds(data) {
-
-console.log(data);
-
-
     // заполним масив объявлений данными с сервера
     window.data.initRealAds(data);
 
@@ -224,22 +220,10 @@ console.log(data);
 
   }
 
-  // ф-ия блокирует/разблокирует форму фильтрации объявлений
-  function toggleFilterFormAbility(isEnabled) {
-    // block select elements
-    var adFormFieldSets = document.querySelector('.map__filters').querySelectorAll('select');
-    for (var i = 0; i < adFormFieldSets.length; i++) {
-      adFormFieldSets[i].disabled = !isEnabled;
-    }
-
-    // block fieldset element
-    document.querySelector('.map__filters').querySelector('fieldset').disabled = !isEnabled;
-  }
-
   // главная ф-ия переключения активности формы и карты
   function toggleMainFormActivity(isActive) {
     window.form.toggleAdFormAbility(isActive);
-    toggleFilterFormAbility(isActive);
+    window.filter.toggleFilterFormAbility(isActive);
     toggleMapAbility(isActive);
   }
 
@@ -434,7 +418,7 @@ console.log(data);
   // Инициализация
   initMap();
 
-  // Иниуиализация вормы фильтра
+  // Инициализация формы фильтра
   window.filter.initFilerForm(cbFilterEvent);
 
 })();

@@ -3,9 +3,10 @@
 'use strict';
 
 (function () {
-  // коды кнопок
   var KEY_RETURN = 13;
   var KEY_ESCAPE = 27;
+
+  var VAL_ANY = 'any';
 
   // создает и инициализирует атрибут у объекта
   function setObjectAttribute(obj, attrName, atrValue) {
@@ -38,6 +39,7 @@
   window.utils = {
     KEY_RETURN: KEY_RETURN,
     KEY_ESCAPE: KEY_ESCAPE,
+    VAL_ANY: VAL_ANY,
 
     setObjectAttribute: setObjectAttribute,
     getAttributeValue: getAttributeValue,

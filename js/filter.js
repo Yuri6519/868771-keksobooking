@@ -70,26 +70,32 @@
     filterSet.housingFeaturesValues = fillFetures();
   }
 
+  // дополнительные действия при выборе фильтра
+  function doAfter(cbFunc) {
+    cbFunc(filterSet);
+    window.card.removeOldAds();
+  }
+
   // инициализация
   function initFilerForm(cbFunc) {
     housingType.addEventListener('change', function () {
       setHousingTypeValue();
-      cbFunc(filterSet);
+      doAfter(cbFunc);
     });
 
     housingPrice.addEventListener('change', function () {
       setHousingPriceValue();
-      cbFunc(filterSet);
+      doAfter(cbFunc);
     });
 
     housingRooms.addEventListener('change', function () {
       setHousingRoomsValue();
-      cbFunc(filterSet);
+      doAfter(cbFunc);
     });
 
     housingGuests.addEventListener('change', function () {
       setHousingGuestsValue();
-      cbFunc(filterSet);
+      doAfter(cbFunc);
     });
 
     // подпишем input-ы на событие клика
@@ -97,13 +103,48 @@
     inpList.forEach(function (itr) {
       itr.addEventListener('click', function () {
         setHousingFeaturesValues();
-        cbFunc(filterSet);
+        doAfter(cbFunc);
       });
     });
   }
 
+  // ф-ия блокирует/разблокирует форму
+  function toggleFilterFormAbility(isEnabled) {
+    var adFormFieldSets = filterForm.querySelectorAll('select');
+    for (var i = 0; i < adFormFieldSets.length; i++) {
+      adFormFieldSets[i].disabled = !isEnabled;
+    }
+
+    filterForm.querySelector('fieldset').disabled = !isEnabled;
+
+    // при переводе формы в неактивное состояние очищаем фильтр
+    if (!isEnabled) {
+      clearAllFilters();
+    }
+  }
+
+  // ф-ия очищает форму (убирает фильтры)
+  function clearAllFilters() {
+    housingType.value = window.utils.VAL_ANY;
+    housingPrice.value = window.utils.VAL_ANY;
+    housingRooms.value = window.utils.VAL_ANY;
+    housingGuests.value = window.utils.VAL_ANY;
+
+    housingFeatures.querySelectorAll('input').forEach(function (itr) {
+      itr.checked = false;
+    });
+
+    filterSet.housingTypeValue = housingType.value;
+    filterSet.housingPriceValue = housingPrice.value;
+    filterSet.housingRoomsValue = housingRooms.value;
+    filterSet.housingGuestsValue = housingGuests.value;
+    filterSet.housingFeaturesValues = [];
+
+  }
+
   window.filter = {
-    initFilerForm: initFilerForm
+    initFilerForm: initFilerForm,
+    toggleFilterFormAbility: toggleFilterFormAbility
   };
 
 
