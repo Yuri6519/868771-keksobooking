@@ -1,3 +1,5 @@
+// модуль для работы с картой
+
 'use strict';
 
 (function () {
@@ -13,22 +15,25 @@
   // начальное положение главной метки- константа для инициализации Y
   var MAIN_PIN_INIT_TOP = parseInt(mainPin.style.top, 10);
 
-  // флаг режима
-  var IS_TEST_MODE = false;
+  // ограничения
+  var MAP_MIN_LEFT = 0;
+  var MAP_MAX_LENGTH = 1199;
+  var MAP_MIN_TOP = 130;
+  var MAP_MAX_HEIGHT = 630;
 
   // переменная для хранения левого верхнего угла главной метки - left
   var mainPinLeft;
   // переменная для хранения левого верхнего угла главной метки - top
   var mainPinTop;
-  // ширина главной метки (непонятно где брать - беру по размеру из панели дебагера)
+  // ширина главной метки (беру по размеру из панели дебагера)
   var mainPinWidth = 65;
-  // высота главной метки (непонятно где брать - беру по размеру из панели дебагера)
+  // высота главной метки (беру по размеру из панели дебагера)
   var mainPinHeight = 65;
   // координата X середины главной метки
   var mainPinMiddleX;
   // координата Y середины главной метки
   var mainPinMiddleY;
-  // хвост метки (непонятно где брать - беру по размеру из панели дебагера)
+  // хвост метки (беру по размеру из панели дебагера)
   var mainPinTail = 20; // весь квадрат = 65, image = 62, хвост идет от image и длина = 22. Округлил до 2 (65 - 62 / 2 = 1,5) и тогда хвост выходит за рамку 22-2=20. Как-так...
   // метка с хвостом
   var mainPinFullHeight = mainPinHeight + mainPinTail;
@@ -37,43 +42,25 @@
   var isMouseUp = false;
 
   // отрисовка меток похожих объявлений
-  function showAdsData() {
-    // 2. Создадим DOM элементы меток
-    var pinContainer = window.pin.createPins(window.data.getAds());
+  function showAdsData(filter) {
+    // 1. Создадим DOM элементы меток
+    var pinContainer = window.pin.createPins(window.data.getAds(filter));
 
-    // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
-    // 3.1. Чистка блока от старых пинов
+    // 2. Отрисуем сгенерированные DOM-элементы в блок .map__pins
+    // 2.1. Чистка блока от старых пинов
     window.pin.removeAllPins();
 
-    // 3.2. Добавляем в блок
+    // 2.2. Добавляем в блок
     document.querySelector('.map__pins').appendChild(pinContainer);
-  }
-
-  // создание тестовых данныъх
-  function initTestData() {
-
-    // инициализация массива объектов объявлений
-    window.data.initAds(8);
-
-    // покажем
-    showAdsData();
-
   }
 
   // показ похожих объявлений
   function showSimilarAds() {
-    // в зависимости от режима инициализируем массив объявлений тестовыми или реальными данными
-    if (IS_TEST_MODE) {
-      initTestData();
-    } else {
-      window.backend.loadData(cbSuccessLoadAds, cbErrorLoadAds);
-    }
-
+    window.backend.loadData(cbSuccessLoadAds, cbErrorLoadAds);
   }
 
   // callback на загрузку данных
   function cbSuccessLoadAds(data) {
-
     // заполним масив объявлений данными с сервера
     window.data.initRealAds(data);
 
@@ -235,22 +222,10 @@
 
   }
 
-  // ф-ия блокирует/разблокирует форму фильтрации объявлений
-  function toggleFilterFormAbility(isEnabled) {
-    // block select elements
-    var adFormFieldSets = document.querySelector('.map__filters').querySelectorAll('select');
-    for (var i = 0; i < adFormFieldSets.length; i++) {
-      adFormFieldSets[i].disabled = !isEnabled;
-    }
-
-    // block fieldset element
-    document.querySelector('.map__filters').querySelector('fieldset').disabled = !isEnabled;
-  }
-
   // главная ф-ия переключения активности формы и карты
   function toggleMainFormActivity(isActive) {
     window.form.toggleAdFormAbility(isActive);
-    toggleFilterFormAbility(isActive);
+    window.filter.toggleFilterFormAbility(isActive);
     toggleMapAbility(isActive);
   }
 
@@ -311,12 +286,12 @@
       // Новые координаты верхнего левого угла метки, именно на них поставил ограничение
       // x
       var shiftLeft = (mainPin.offsetLeft - shiftPos.x);
-      shiftLeft = shiftLeft >= window.data.MAP_MIN_LEFT - Math.round(mainPinWidth / 2) ? shiftLeft : window.data.MAP_MIN_LEFT - Math.round(mainPinWidth / 2);
-      shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= window.data.MAP_MAX_LENGTH ? shiftLeft : window.data.MAP_MAX_LENGTH - Math.round(mainPinWidth / 2);
+      shiftLeft = shiftLeft >= MAP_MIN_LEFT - Math.round(mainPinWidth / 2) ? shiftLeft : MAP_MIN_LEFT - Math.round(mainPinWidth / 2);
+      shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= MAP_MAX_LENGTH ? shiftLeft : MAP_MAX_LENGTH - Math.round(mainPinWidth / 2);
       // y
       var shifTop = (mainPin.offsetTop - shiftPos.y);
-      shifTop = shifTop >= window.data.MAP_MIN_TOP ? shifTop : window.data.MAP_MIN_TOP;
-      shifTop = shifTop <= window.data.MAP_MAX_HEIGHT ? shifTop : window.data.MAP_MAX_HEIGHT;
+      shifTop = shifTop >= MAP_MIN_TOP ? shifTop : MAP_MIN_TOP;
+      shifTop = shifTop <= MAP_MAX_HEIGHT ? shifTop : MAP_MAX_HEIGHT;
 
       newConerPos = {
         x: shiftLeft,
@@ -394,6 +369,10 @@
 
   }
 
+  function cbFilterEvent(data) {
+    showAdsData(data);
+  }
+
   // инициализация
   function initMap() {
     // перевод формы в неактивное состояние
@@ -440,5 +419,8 @@
   // Точка входа
   // Инициализация
   initMap();
+
+  // Инициализация формы фильтра
+  window.filter.initFilerForm(cbFilterEvent);
 
 })();
