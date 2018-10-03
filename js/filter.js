@@ -3,6 +3,9 @@
 
 (function () {
 
+  // задержка на срабатывание фильтра - мсек
+  var DELAY_INTERVAL = 500;
+
   // форма
   var filterForm = document.querySelector('.map__filters');
 
@@ -28,6 +31,15 @@
     housingRoomsValue: housingRooms.value,
     housingGuestsValue: housingGuests.value,
     housingFeaturesValues: []
+  };
+
+  // обработчики применения каждого из фильтра
+  var filterFuncSet = {
+    onHousingTypeChange: function () {},
+    onHousingPriceChange: function () {},
+    onHousingRoomsChange: function () {},
+    onHousingGuestsChange: function () {},
+    onHousingFeaturesChanges: function () {}
   };
 
   // заполняет массив особенностей
@@ -70,7 +82,7 @@
     filterSet.housingFeaturesValues = fillFetures();
   }
 
-  // дополнительные действия при выборе фильтра
+  // действия после выбора фильтра
   function doAfter(cbFunc) {
     cbFunc(filterSet);
     window.card.removeOldAds();
@@ -78,34 +90,57 @@
 
   // инициализация
   function initFilerForm(cbFunc) {
+    // 1. События на фильтры
     housingType.addEventListener('change', function () {
-      setHousingTypeValue();
-      doAfter(cbFunc);
+      filterFuncSet.onHousingTypeChange();
     });
 
     housingPrice.addEventListener('change', function () {
-      setHousingPriceValue();
-      doAfter(cbFunc);
+      filterFuncSet.onHousingPriceChange();
     });
 
     housingRooms.addEventListener('change', function () {
-      setHousingRoomsValue();
-      doAfter(cbFunc);
+      filterFuncSet.onHousingRoomsChange();
     });
 
     housingGuests.addEventListener('change', function () {
-      setHousingGuestsValue();
-      doAfter(cbFunc);
+      filterFuncSet.onHousingGuestsChange();
     });
 
     // подпишем input-ы на событие клика
     var inpList = housingFeatures.querySelectorAll('input');
     inpList.forEach(function (itr) {
       itr.addEventListener('click', function () {
-        setHousingFeaturesValues();
-        doAfter(cbFunc);
+        filterFuncSet.onHousingFeaturesChanges();
       });
     });
+
+    // 2. Обработчики событий - убираем "дребезг"
+    filterFuncSet.onHousingTypeChange = window.debounce.delay(function () {
+      setHousingTypeValue();
+      doAfter(cbFunc);
+    }, DELAY_INTERVAL);
+
+    filterFuncSet.onHousingPriceChange = window.debounce.delay(function () {
+      setHousingPriceValue();
+      doAfter(cbFunc);
+    }, DELAY_INTERVAL);
+
+    filterFuncSet.onHousingRoomsChange = window.debounce.delay(function () {
+      setHousingRoomsValue();
+      doAfter(cbFunc);
+    }, DELAY_INTERVAL);
+
+    filterFuncSet.onHousingGuestsChange = window.debounce.delay(function () {
+      setHousingGuestsValue();
+      doAfter(cbFunc);
+    }, DELAY_INTERVAL);
+
+    filterFuncSet.onHousingFeaturesChanges = window.debounce.delay(function () {
+      setHousingFeaturesValues();
+      doAfter(cbFunc);
+    }, DELAY_INTERVAL);
+
   }
 
   // ф-ия блокирует/разблокирует форму

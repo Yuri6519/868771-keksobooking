@@ -1,3 +1,5 @@
+// модуль для работы с картой
+
 'use strict';
 
 (function () {
@@ -41,14 +43,14 @@
 
   // отрисовка меток похожих объявлений
   function showAdsData(filter) {
-    // 2. Создадим DOM элементы меток
+    // 1. Создадим DOM элементы меток
     var pinContainer = window.pin.createPins(window.data.getAds(filter));
 
-    // 3. Отрисуем сгенерированные DOM-элементы в блок .map__pins
-    // 3.1. Чистка блока от старых пинов
+    // 2. Отрисуем сгенерированные DOM-элементы в блок .map__pins
+    // 2.1. Чистка блока от старых пинов
     window.pin.removeAllPins();
 
-    // 3.2. Добавляем в блок
+    // 2.2. Добавляем в блок
     document.querySelector('.map__pins').appendChild(pinContainer);
   }
 
