@@ -9,6 +9,24 @@
   // обычная метка - pin
   var PIN_WIDTH = 50;
 
+  // создает и инициализирует атрибут у объекта
+  function setObjectAttribute(obj, attrName, atrValue) {
+    var attr = document.createAttribute(attrName);
+    attr.value = atrValue;
+    obj.attributes.setNamedItem(attr);
+  }
+
+  // читает атрибут
+  function getAttributeValue(element, attrName) {
+    var value;
+    for (var i = 0; i < element.attributes.length; i++) {
+      if (element.attributes[i].name === attrName) {
+        value = element.attributes[i].value;
+      }
+    }
+    return value;
+  }
+
   function setPinNonactive() {
     // в каждый момент времени может быть активна только одна метка
     var activePin = document.querySelector('.map__pin--active');
@@ -20,7 +38,7 @@
   // обработка клика на метке
   function processPinClick(evt) {
     var button = evt.currentTarget;
-    var pinId = window.utils.getAttributeValue(button, PIN_ID);
+    var pinId = getAttributeValue(button, PIN_ID);
 
     // удалим старую карточку
     window.card.removeOldAds();
@@ -50,7 +68,7 @@
     button.style.top = (pinObject.location.y) + 'px';
 
     // добавим ИД элемента для связки с событием
-    window.utils.setObjectAttribute(button, PIN_ID, index);
+    setObjectAttribute(button, PIN_ID, index);
 
     // событие клика
     button.addEventListener('click', function (evt) {
