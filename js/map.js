@@ -351,6 +351,9 @@
     // очистим пины
     window.pin.removeAllPins();
 
+    // очистим фото
+    window.photo.cleanUp();
+
     // уберем событие на кнопке reset, так как оно инициализируется в initMap
     document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
 
@@ -376,10 +379,6 @@
   // инициализация
   function initMap() {
     // перевод формы в неактивное состояние
-    // блок с картой .map содержит класс map--faded;
-    // форма заполнения информации об объявлении .ad-form содержит класс ad-form--disabled;
-    // все <input> и <select> формы .ad-form заблокированы с помощью атрибута disabled, добавленного на них или на их родительские блоки fieldset.
-    // форма с фильтрами .map__filters заблокирована так же, как и форма .ad-form
     toggleMainFormActivity(false);
 
     // проверка и установка ограничений на поля ввода
@@ -422,5 +421,8 @@
 
   // Инициализация формы фильтра
   window.filter.initFilerForm(cbFilterEvent);
+
+  // Инициализация загрузчика фотографий
+  window.photo.initLoader();
 
 })();
