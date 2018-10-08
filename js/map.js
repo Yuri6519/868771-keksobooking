@@ -354,12 +354,6 @@
     // очистим и проинициализируем объекты фото
     window.photo.initLoader();
 
-    // уберем событие на кнопке reset, так как оно инициализируется в initMap
-    document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
-
-    // форма
-    window.form.adForm.removeEventListener('submit', onFormSubmit);
-
     // инициализируем
     initMap();
 
@@ -406,18 +400,19 @@
     // отрисовка пинов - исходное состояние
     isMouseUp = false;
 
-    // кнопка reset
-    document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
-
-    // отправка данных - форма
-    window.form.adForm.addEventListener('submit', onFormSubmit);
-
   }
 
 
   // Точка входа
   // Инициализация
   initMap();
+
+  // кнопка reset
+  document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
+
+  // отправка данных - форма
+  window.form.adForm.addEventListener('submit', onFormSubmit);
+
 
   // Инициализация формы фильтра
   window.filter.initFilerForm(cbFilterEvent);

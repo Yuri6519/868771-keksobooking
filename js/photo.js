@@ -133,10 +133,9 @@
 
   PhotoDwell.prototype.clearPhotosElements = function (def) {
     var imgList = this._image.querySelectorAll('.ad-form__photo');
-
-    for (var i = 0; i < imgList.length; i++) {
-      imgList[i].remove();
-    }
+    [].forEach.call(imgList, function (itr) {
+      itr.remove();
+    });
 
     if (def) {
       // для начальной оторисовки вернем на место placeholder
@@ -153,13 +152,13 @@
       var indFrom = -1;
       var indTo = -1;
 
-      for (var i = 0; i < this._photos.length; i++) {
-        if (this._photos[i].id === idFrom) {
-          indFrom = i;
-        } else if (this._photos[i].id === idTo) {
-          indTo = i;
+      this._photos.forEach(function (itr, index) {
+        if (itr.id === idFrom) {
+          indFrom = index;
+        } else if (itr.id === idTo) {
+          indTo = index;
         }
-      }
+      });
 
       if (indFrom >= 0 && indTo >= 0) {
         var elArrForm = this._photos[indFrom];

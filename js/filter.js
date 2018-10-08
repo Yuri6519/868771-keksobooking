@@ -118,9 +118,10 @@
   // ф-ия блокирует/разблокирует форму
   function toggleFilterFormAbility(isEnabled) {
     var adFormFieldSets = filterForm.querySelectorAll('select');
-    for (var i = 0; i < adFormFieldSets.length; i++) {
-      adFormFieldSets[i].disabled = !isEnabled;
-    }
+
+    [].forEach.call(adFormFieldSets, function (itr) {
+      itr.disabled = !isEnabled;
+    });
 
     filterForm.querySelector('fieldset').disabled = !isEnabled;
 

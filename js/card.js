@@ -10,16 +10,20 @@
   // шаблон времени заезда и выезда
   var STR_CHECK_IN_OUT = 'Заезд после {{offer.checkin}}, выезд до {{offer.checkout}}';
 
-  var dwellingTypes = ['palace', 'flat', 'house', 'bungalo'];
-  var dwellingTypesRus = ['Дворец', 'Квартира', 'Дом', 'Бунгало'];
+  var dwellingTypes = {
+    'palace': {nameRus: 'Дворец', minPrice: 10000},
+    'flat': {nameRus: 'Квартира', minPrice: 1000},
+    'house': {nameRus: 'Дом', minPrice: 5000},
+    'bungalo': {nameRus: 'Бунгало', minPrice: 0}
+  };
 
   // чистка от прежних объявлений
   function removeOldAds() {
     var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
 
-    for (var i = 0; i < mapAds.length; i++) {
-      mapAds[i].remove();
-    }
+    [].forEach.call(mapAds, function (itr) {
+      itr.remove();
+    });
 
   }
 
@@ -47,32 +51,23 @@
 
   // ф-ия возвращает русское название типа жилья
   function getDwellingTypeRus(typeStr) {
-    var res = '';
-
-    for (var i = 0; i < dwellingTypes.length; i++) {
-      if (dwellingTypes[i] === typeStr) {
-        res = dwellingTypesRus[i];
-        break;
-      }
-    }
-    return res;
+    return dwellingTypes[typeStr].nameRus;
   }
 
   function fillFeatures(features, featArr) {
     var feature = features.querySelectorAll('.popup__feature');
 
-    // удалим существующие узлы
-    for (var i = 0; i < feature.length; i++) {
-      features.removeChild(feature[i]);
-    }
+    [].forEach.call(feature, function (itr) {
+      itr.remove();
+    });
 
     // добавим из featArr
-    for (i = 0; i < featArr.length; i++) {
+    featArr.forEach(function (itr) {
       var elLi = document.createElement('li');
       elLi.classList.add('popup__feature');
-      elLi.classList.add('popup__feature--' + featArr[i]);
+      elLi.classList.add('popup__feature--' + itr);
       features.appendChild(elLi);
-    }
+    });
 
     if (feature.length === 0) {
       feature.hidden = true;
@@ -84,20 +79,20 @@
     var photo = photos.querySelectorAll('.popup__photo');
 
     // удалим существующие узлы
-    for (var i = 0; i < photo.length; i++) {
-      photos.removeChild(photo[i]);
-    }
+    [].forEach.call(photo, function (itr) {
+      itr.remove();
+    });
 
     // добавим из photoArr
-    for (i = 0; i < photoArr.length; i++) {
+    photoArr.forEach(function (itr) {
       var elImg = document.createElement('img');
       elImg.classList.add('popup__photo');
       elImg.width = 45;
       elImg.height = 40;
       elImg.alt = 'Фотография жилья';
-      elImg.src = photoArr[i];
+      elImg.src = itr;
       photos.appendChild(elImg);
-    }
+    });
 
     if (photo.length === 0) {
       photo.hidden = true;

@@ -32,19 +32,11 @@
 
   // проверка на особенности
   function checkFeayures(ftcFilter, ftcAds) {
-    var res = false;
-
-    for (var i = 0; i < ftcFilter.length; i++) {
-      var ind = ftcAds.indexOf(ftcFilter[i]);
-
-      if (ind >= 0) {
-        res = true;
-      } else {
-        res = false;
-        break;
-      }
-    }
-    return res;
+    return !(ftcFilter.map(function (itr) {
+      return ftcAds.indexOf(itr);
+    }).some(function (itr) {
+      return itr < 0;
+    }));
   }
 
   function checkAdsForFilter(element, filter) {
