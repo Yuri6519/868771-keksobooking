@@ -42,17 +42,46 @@
     },
 
     // обработчик события загрузки файла
-    onFileLoad: function () {},
+    onFileLoad: function (evt) {
+      this.showPhoto(evt.currentTarget.result);
+    },
 
     // загрузка файла
     fileLoad: function () {
       var _fileReader = new FileReader();
 
-      _fileReader.addEventListener('load', this.onFileLoad);
+      _fileReader.addEventListener('load', this.onFileLoad.bind(this));
 
       _fileReader.readAsDataURL(this._elInput.files[0]);
 
+    },
+
+    onInputChange: function () {
+
+      if (this.fileLoadCheck()) {
+        // файл выбран и расширение подходит
+        this.fileLoad();
+      }
+    },
+
+    // инициализация
+    init: function () {
+      this._elInput.addEventListener('change', this.onInputChange.bind(this));
     }
+
+  };
+
+  // конструктор для аватара
+  function PhotoAvatar(elInput, elImage) {
+    Photo.call(this, elInput, elImage);
+  }
+  PhotoAvatar.prototype = Object.create(Photo.prototype);
+
+  PhotoAvatar.prototype.init = function () {
+    // частично переопределим родительский метод
+    Photo.prototype.init.call(this);
+
+    this._image.src = 'img/muffin-grey.svg';
 
   };
 
@@ -64,7 +93,16 @@
   PhotoDwell.prototype = Object.create(Photo.prototype);
 
   PhotoDwell.prototype._photos = [];
-  PhotoDwell.prototype._sortPhotos = [];
+
+  PhotoDwell.prototype.init = function () {
+    // частично переопределим родительский метод
+    Photo.prototype.init.call(this);
+
+    this.clearPhotos();
+    this.clearPhotosElements(true);
+
+  };
+
 
   // добавляет фото в массив
   PhotoDwell.prototype.addPhoto = function (data) {
@@ -109,23 +147,9 @@
 
   };
 
-  PhotoDwell.prototype.onImgMouseDown = function (evt) {
-
-    //evt.preventDefault();
-
-    this._sortPhotos = [];
-    this._sortPhotos[0] = evt.currentTarget.id;
-
-    evt.target.addEventListener('mousemove', this.onImgMouseMove.bind(this));
-
-
-  };
-
-  PhotoDwell.prototype.sortPhotos = function () {
+  PhotoDwell.prototype.sortPhotos = function (idFrom, idTo) {
     // если было перетаскивание (mouseup на др. элементе)
-    if (this._sortPhotos.length > 0 && this._sortPhotos[0] !== this._sortPhotos[1]) {
-      var idFrom = parseInt(this._sortPhotos[0], 10);
-      var idTo = parseInt(this._sortPhotos[1], 10);
+    if (idFrom !== idTo) {
       var indFrom = -1;
       var indTo = -1;
 
@@ -148,37 +172,53 @@
 
   };
 
-  PhotoDwell.prototype.onImgMouseUp = function (evt) {
+  PhotoDwell.prototype.onDragStart = function (evt) {
+    evt.target.style.opacity = '0.4';
+    evt.dataTransfer.effectAllowed = 'move';
 
-    evt.preventDefault();
-
-    if (this._sortPhotos.length === 1) {
-      this._sortPhotos[1] = evt.currentTarget.id;
-
-      this.sortPhotos();
-
-      this.showPhotoArray();
-
-      evt.target.removeEventListener('mousemove', this.onImgMouseMove.bind(this));
-
-
-    }
+    evt.dataTransfer.setData('data', evt.target.id);
 
   };
 
-  PhotoDwell.prototype.onImgMouseMove = function (evt) {
+  PhotoDwell.prototype.onDragOver = function (evt) {
     evt.preventDefault();
 
-    // evt.target.style.left = '-10px';
-    // evt.target.style.top = '-20px';
+    evt.dataTransfer.dropEffect = 'move';
+  };
 
-    // console.log(evt.target.style.left);
-     console.log(evt.target);
+  PhotoDwell.prototype.onDragEnter = function (evt) {
+    evt.preventDefault();
 
-    
+    this.classList.add('over');
 
   };
 
+  PhotoDwell.prototype.onDragLeave = function (evt) {
+    evt.preventDefault();
+
+    this.classList.remove('over');
+
+  };
+
+  PhotoDwell.prototype.onDrop = function (evt) {
+    evt.preventDefault();
+
+    evt.target.classList.remove('over');
+
+    var idFrom = parseInt(evt.dataTransfer.getData('data'), 10);
+    var idTo = parseInt(evt.target.id, 10);
+
+    this.sortPhotos(idFrom, idTo);
+    this.showPhotoArray();
+
+  };
+
+  PhotoDwell.prototype.onDragEnd = function (evt) {
+    evt.preventDefault();
+
+    this.style.opacity = '1';
+
+  };
 
   PhotoDwell.prototype.showPhotoArray = function () {
     this.clearPhotosElements();
@@ -194,17 +234,20 @@
       elImg.alt = this._photos[i].fileName;
       elImg.src = this._photos[i].img;
       elImg.id = this._photos[i].id;
+      elImg.draggable = true;
 
-      elImg.addEventListener('mousedown', this.onImgMouseDown.bind(this));
-      //elImg.addEventListener('mouseup', this.onImgMouseUp.bind(this));
-      elImg.addEventListener('drop', this.onImgMouseUp.bind(this));
+      // события drag n drop
+      elImg.addEventListener('dragstart', this.onDragStart);
+      elImg.addEventListener('dragenter', this.onDragEnter);
+      elImg.addEventListener('dragover', this.onDragOver);
+      elImg.addEventListener('dragleave', this.onDragLeave);
+      elImg.addEventListener('drop', this.onDrop.bind(this));
+      elImg.addEventListener('dragend', this.onDragEnd);
+
 
       elDiv.appendChild(elImg);
       this._image.appendChild(elDiv);
     }
-
-    console.log(this._photos);
-
 
   };
 
@@ -215,77 +258,23 @@
     }
   };
 
-
-
-
-
-  // аватар пользователя
-  var elAvatarInput = document.querySelector('.ad-form__field input[type=file]');
-  var elAvatarImage = document.querySelector('.ad-form-header__preview img');
-  // объект для работы с загрузкой аватара пользователя
-  var photoAvatar = new Photo(elAvatarInput, elAvatarImage);
-
-  // фото жилья
-  var elDwellInput = document.querySelector('.ad-form__upload input[type=file]');
-  var elDwellImage = document.querySelector('.ad-form__photo-container');
-  // объект для работы с загрузкой фото жилья
-  var photoDwell = new PhotoDwell(elDwellInput, elDwellImage);
-
   // инициализация загрузчика аватара
   function initAvatarLoader() {
-    // обработчик события onChange при выборе аватарки пользователя
-    function onUserFileInputChange() {
-
-      function onFIleLoad(evnt) {
-        // показ аватара
-        photoAvatar.showPhoto(evnt.currentTarget.result);
-      }
-
-      if (photoAvatar.fileLoadCheck()) {
-        // файл выбран и расширение подходит
-        photoAvatar.onFileLoad = onFIleLoad;
-
-        photoAvatar.fileLoad();
-
-      }
-
-    }
-
-    elAvatarInput.addEventListener('change', onUserFileInputChange);
-
+    var elAvatarInput = document.querySelector('.ad-form__field input[type=file]');
+    var elAvatarImage = document.querySelector('.ad-form-header__preview img');
+    // объект для работы с загрузкой аватара пользователя
+    var photoAvatar = new PhotoAvatar(elAvatarInput, elAvatarImage);
+    photoAvatar.init();
   }
 
   // инициализация загрузчика фото жилья
   function initDwellLoader() {
-
-    // обработчик события onChange при выборе фото жилья
-    function onDwellFileInputChange() {
-
-      function onFIleLoad(evnt) {
-        // показ фото
-        photoDwell.showPhoto(evnt.currentTarget.result);
-      }
-
-      if (photoDwell.fileLoadCheck()) {
-        // файл выбран и расширение подходит
-        photoDwell.onFileLoad = onFIleLoad;
-
-        photoDwell.fileLoad();
-
-      }
-
-    }
-
-    elDwellInput.addEventListener('change', onDwellFileInputChange);
-
-  }
-
-  function cleanUp() {
-    elAvatarImage.src = 'img/muffin-grey.svg';
-    photoDwell.clearPhotos();
-    photoDwell.clearPhotosElements(true);
-
-
+    // фото жилья
+    var elDwellInput = document.querySelector('.ad-form__upload input[type=file]');
+    var elDwellImage = document.querySelector('.ad-form__photo-container');
+    // объект для работы с загрузкой фото жилья
+    var photoDwell = new PhotoDwell(elDwellInput, elDwellImage);
+    photoDwell.init();
   }
 
   function initLoader() {
@@ -294,8 +283,7 @@
   }
 
   window.photo = {
-    initLoader: initLoader,
-    cleanUp: cleanUp
+    initLoader: initLoader
   };
 
 })();

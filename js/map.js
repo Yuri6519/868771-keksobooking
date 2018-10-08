@@ -351,8 +351,8 @@
     // очистим пины
     window.pin.removeAllPins();
 
-    // очистим фото
-    window.photo.cleanUp();
+    // очистим и проинициализируем объекты фото
+    window.photo.initLoader();
 
     // уберем событие на кнопке reset, так как оно инициализируется в initMap
     document.querySelector('.ad-form__reset').removeEventListener('click', onButtonResetClick);
