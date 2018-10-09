@@ -33,15 +33,6 @@
     housingFeaturesValues: []
   };
 
-  // обработчики применения каждого из фильтра
-  var filterFuncSet = {
-    onHousingTypeChange: function () {},
-    onHousingPriceChange: function () {},
-    onHousingRoomsChange: function () {},
-    onHousingGuestsChange: function () {},
-    onHousingFeaturesChanges: function () {}
-  };
-
   // заполняет массив особенностей
   function fillFetures() {
     return [].map.call(housingFeatures.querySelectorAll('input'), function (itr) {
@@ -82,73 +73,55 @@
     filterSet.housingFeaturesValues = fillFetures();
   }
 
-  // действия после выбора фильтра
+  // действия после выбора фильтра (убираем "дребезг")
   function doAfter(cbFunc) {
-    cbFunc(filterSet);
-    window.card.removeOldAds();
+    window.debounce.delay(function () {
+      window.card.removeOldAds();
+      cbFunc(filterSet);
+    }, DELAY_INTERVAL);
   }
 
   // инициализация
   function initFilerForm(cbFunc) {
     // 1. События на фильтры
     housingType.addEventListener('change', function () {
-      filterFuncSet.onHousingTypeChange();
+      setHousingTypeValue();
+      doAfter(cbFunc);
     });
 
     housingPrice.addEventListener('change', function () {
-      filterFuncSet.onHousingPriceChange();
+      setHousingPriceValue();
+      doAfter(cbFunc);
     });
 
     housingRooms.addEventListener('change', function () {
-      filterFuncSet.onHousingRoomsChange();
+      setHousingRoomsValue();
+      doAfter(cbFunc);
     });
 
     housingGuests.addEventListener('change', function () {
-      filterFuncSet.onHousingGuestsChange();
+      setHousingGuestsValue();
+      doAfter(cbFunc);
     });
 
     // подпишем input-ы на событие клика
     var inpList = housingFeatures.querySelectorAll('input');
     inpList.forEach(function (itr) {
       itr.addEventListener('click', function () {
-        filterFuncSet.onHousingFeaturesChanges();
+        setHousingFeaturesValues();
+        doAfter(cbFunc);
       });
     });
-
-    // 2. Обработчики событий - убираем "дребезг"
-    filterFuncSet.onHousingTypeChange = window.debounce.delay(function () {
-      setHousingTypeValue();
-      doAfter(cbFunc);
-    }, DELAY_INTERVAL);
-
-    filterFuncSet.onHousingPriceChange = window.debounce.delay(function () {
-      setHousingPriceValue();
-      doAfter(cbFunc);
-    }, DELAY_INTERVAL);
-
-    filterFuncSet.onHousingRoomsChange = window.debounce.delay(function () {
-      setHousingRoomsValue();
-      doAfter(cbFunc);
-    }, DELAY_INTERVAL);
-
-    filterFuncSet.onHousingGuestsChange = window.debounce.delay(function () {
-      setHousingGuestsValue();
-      doAfter(cbFunc);
-    }, DELAY_INTERVAL);
-
-    filterFuncSet.onHousingFeaturesChanges = window.debounce.delay(function () {
-      setHousingFeaturesValues();
-      doAfter(cbFunc);
-    }, DELAY_INTERVAL);
 
   }
 
   // ф-ия блокирует/разблокирует форму
   function toggleFilterFormAbility(isEnabled) {
     var adFormFieldSets = filterForm.querySelectorAll('select');
-    for (var i = 0; i < adFormFieldSets.length; i++) {
-      adFormFieldSets[i].disabled = !isEnabled;
-    }
+
+    [].forEach.call(adFormFieldSets, function (itr) {
+      itr.disabled = !isEnabled;
+    });
 
     filterForm.querySelector('fieldset').disabled = !isEnabled;
 

@@ -1160,6 +1160,10 @@ fieldset {
   border: 2px solid #ff5635;
 }
 
+.popup__photo.over {
+  border: 2px dashed #ff5635;
+}
+
 
 /**
  * Сообщения об успешном и неуспешном создании объявления

@@ -31,29 +31,9 @@
     }
   ];
 
-  var dwellingMinPrice = [
-    {key: 0, value: 10000},
-    {key: 1, value: 1000},
-    {key: 2, value: 5000},
-    {key: 3, value: 0}
-  ];
-
   // возвращает мин цену жилья в зависимости от типа жилья
   function getMinDwellPrice(dwellName) {
-    var res = -1;
-    for (var i = 0; i <= window.card.dwellingTypes.length; i++) {
-      if (window.card.dwellingTypes[i] === dwellName) {
-        for (var ind = 0; ind < dwellingMinPrice.length; ind++) {
-          if (dwellingMinPrice[ind].key === i) {
-            res = dwellingMinPrice[i].value;
-            break;
-          }
-        }
-      }
-    }
-
-    // нужна проверка на >= 0 и если нет - raise exception
-    return res;
+    return window.card.dwellingTypes[dwellName].minPrice;
   }
 
   // ф-ия блокирует/разблокирует форму добавления объявления
@@ -66,9 +46,10 @@
 
     // fieldset
     var adFormFieldSets = adForm.querySelectorAll('fieldset');
-    for (var i = 0; i < adFormFieldSets.length; i++) {
-      adFormFieldSets[i].disabled = !isEnabled;
-    }
+
+    [].forEach.call(adFormFieldSets, function (itr) {
+      itr.disabled = !isEnabled;
+    });
   }
 
   function getAddressStr(addrX, addrY) {
@@ -88,39 +69,34 @@
 
   // установка опций выбора количества гостей
   function setCapacity(key) {
-    var vals = [];
-
-    for (var i = 0; i < marRoomCapArray.length; i++) {
-      if (marRoomCapArray[i].key === key) {
-        vals = marRoomCapArray[i].value;
-        break;
-      }
-    }
+    var vals = marRoomCapArray.filter(function (itr) {
+      return itr.key === key;
+    }).map(function (itr) {
+      return itr.value;
+    })[0];
 
     if (vals.length > 0) {
       // установка кол-ва гостей
       var localCapOptions = adForm.querySelector('#capacity').querySelectorAll('option');
 
       // уберем все элементы
-      for (i = 0; i < localCapOptions.length; i++) {
-        localCapOptions[i].hidden = true;
-        localCapOptions[i].selected = false;
-      }
+      [].forEach.call(localCapOptions, function (itr) {
+        itr.hidden = true;
+        itr.selected = false;
+      });
 
       // ничего не выбрано
       adForm.querySelector('#capacity').selectedIndex = -1;
 
       // добавим только нужные
-      for (i = 0; i < vals.length; i++) {
-        for (var ind = 0; ind < localCapOptions.length; ind++) {
-          if (parseInt(localCapOptions[ind].value, 10) === vals[i]) {
-
-            localCapOptions[ind].hidden = false;
-            localCapOptions[ind].selected = true; // объект сам переключает seleted у элемента (т.е. выбран будет только один)
-
-          }
-        }
-      }
+      vals.forEach(function (itrVal) {
+        [].filter.call(localCapOptions, function (itrOpt) {
+          return parseInt(itrOpt.value, 10) === itrVal;
+        }).forEach(function (itrCap) {
+          itrCap.hidden = false;
+          itrCap.selected = true; // объект сам переключает seleted у элемента (т.е. выбран будет только один)
+        });
+      });
 
     }
   }
@@ -161,12 +137,12 @@
 
     // особенности
     var features = document.querySelector('.features').querySelectorAll('input');
-    for (var i = 0; i < features.length; i++) {
-      if (features[i].type === 'checkbox') {
-        features[i].checked = false;
-      }
-    }
 
+    [].forEach.call(features, function (itr) {
+      if (itr.type === 'checkbox') {
+        itr.checked = false;
+      }
+    });
   }
 
   // установка элемента времени выезда/заезда
