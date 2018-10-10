@@ -17,7 +17,7 @@
 
   // ограничения
   var MAP_MIN_LEFT = 0;
-  var MAP_MAX_LENGTH = 1199;
+
   var MAP_MIN_TOP = 130;
   var MAP_MAX_HEIGHT = 630;
 
@@ -40,6 +40,10 @@
 
   // ключ на блокировку отрисовки пинов из moseup
   var isMouseUp = false;
+
+  var mapSectionElement = document.querySelector('.map');
+
+  var MAP_MAX_LENGTH = 1199;
 
   // отрисовка меток похожих объявлений
   function showAdsData(filter) {
@@ -213,11 +217,10 @@
 
   // ф-ия блокирует/разблокирует карту
   function toggleMapAbility(isNotFaded) {
-    var map = document.querySelector('.map');
     if (isNotFaded) {
-      map.classList.remove('map--faded');
+      mapSectionElement.classList.remove('map--faded');
     } else {
-      map.classList.add('map--faded');
+      mapSectionElement.classList.add('map--faded');
     }
 
   }
@@ -286,8 +289,10 @@
       // Новые координаты верхнего левого угла метки, именно на них поставил ограничение
       // x
       var shiftLeft = (mainPin.offsetLeft - shiftPos.x);
+      var maxCoordinateX = Math.min(mapSectionElement.clientWidth - Math.round(mainPinWidth / 2), MAP_MAX_LENGTH);
       shiftLeft = shiftLeft >= MAP_MIN_LEFT - Math.round(mainPinWidth / 2) ? shiftLeft : MAP_MIN_LEFT - Math.round(mainPinWidth / 2);
-      shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= MAP_MAX_LENGTH ? shiftLeft : MAP_MAX_LENGTH - Math.round(mainPinWidth / 2);
+      shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= maxCoordinateX ? shiftLeft : maxCoordinateX;
+
       // y
       var shifTop = (mainPin.offsetTop - shiftPos.y);
       shifTop = shifTop >= MAP_MIN_TOP ? shifTop : MAP_MIN_TOP;
