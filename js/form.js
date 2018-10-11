@@ -12,7 +12,7 @@
   var adForm = document.querySelector('.ad-form');
 
   // массив соответствий кол-ва комнат кол-ву жильцов (жестко соответствует значениям поля value эл-в room_number и capacity)
-  var mapRoomCapArray = [
+  var mappedNames = [
     {
       key: 1,
       value: [1]
@@ -69,7 +69,7 @@
 
   // установка опций выбора количества гостей
   function setCapacity(key) {
-    var vals = mapRoomCapArray.filter(function (itr) {
+    var vals = mappedNames.filter(function (itr) {
       return itr.key === key;
     }).map(function (itr) {
       return itr.value;

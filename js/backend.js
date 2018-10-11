@@ -4,15 +4,15 @@
 
 (function () {
 
-  var url = 'https://js.dump.academy/keksobooking';
+  var URL = 'https://js.dump.academy/keksobooking';
 
   // с помощью XMLHttpRequest
   function loadData(onLoad, onError) {
-    processRequest(onLoad, onError, 'GET', url + '/data');
+    processRequest(onLoad, onError, 'GET', URL + '/data');
   }
 
   function saveData(data, onLoad, onError) {
-    processRequest(onLoad, onError, 'POST', url, data);
+    processRequest(onLoad, onError, 'POST', URL, data);
   }
 
   // общий обработчик запросов к серверу

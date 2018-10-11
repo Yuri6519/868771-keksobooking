@@ -82,7 +82,7 @@
   }
 
   // инициализация
-  function initFilerForm(cbFunc) {
+  function initForm(cbFunc) {
     // 1. События на фильтры
     housingType.addEventListener('change', function () {
       setHousingTypeValue();
@@ -116,7 +116,7 @@
   }
 
   // ф-ия блокирует/разблокирует форму
-  function toggleFilterFormAbility(isEnabled) {
+  function toggleFormAbility(isEnabled) {
     var adFormFieldSets = filterForm.querySelectorAll('select');
 
     [].forEach.call(adFormFieldSets, function (itr) {
@@ -127,12 +127,12 @@
 
     // при переводе формы в неактивное состояние очищаем фильтр
     if (!isEnabled) {
-      clearAllFilters();
+      clearAll();
     }
   }
 
   // ф-ия очищает форму (убирает фильтры)
-  function clearAllFilters() {
+  function clearAll() {
     housingType.value = window.utils.VAL_ANY;
     housingPrice.value = window.utils.VAL_ANY;
     housingRooms.value = window.utils.VAL_ANY;
@@ -151,8 +151,8 @@
   }
 
   window.filter = {
-    initFilerForm: initFilerForm,
-    toggleFilterFormAbility: toggleFilterFormAbility
+    initForm: initForm,
+    toggleFormAbility: toggleFormAbility
   };
 
 

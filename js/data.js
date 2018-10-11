@@ -10,7 +10,7 @@
   var ads = [];
 
   // отфильтрованный массив объявлений
-  var filterAds = [];
+  var filteredAds = [];
 
   // инициализация массива объявлений реальными данными
   function initRealAds(data) {
@@ -59,18 +59,18 @@
   // возвращает массив ads
   function getAds(filter) {
 
-    filterAds = [];
+    filteredAds = [];
 
-    filterAds = ads.filter(function (itr) {
+    filteredAds = ads.filter(function (itr) {
       return checkAdsForFilter(itr, filter);
     }).slice(0, MAX_COUNT_ADS);
 
-    return filterAds;
+    return filteredAds;
   }
 
   // возвращает элемент отсортированного массива
   function getFilteredAdsById(id) {
-    return filterAds[id];
+    return filteredAds[id];
   }
 
   window.data = {

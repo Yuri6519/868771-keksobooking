@@ -27,7 +27,7 @@
     return value;
   }
 
-  function setPinNonactive() {
+  function setNonactive() {
     // в каждый момент времени может быть активна только одна метка
     var activePin = document.querySelector('.map__pin--active');
     if (activePin) {
@@ -44,13 +44,13 @@
     window.card.removeOldAds();
 
     // сделаем предыдущую активную метку неактивной (если был клик до этого)
-    setPinNonactive();
+    setNonactive();
 
     // сделаем метку активной
     button.classList.add('map__pin--active');
 
     // карточка
-    var advCard = window.card.getAdvCard(window.data.getFilteredAdsById(pinId));
+    var advCard = window.card.get(window.data.getFilteredAdsById(pinId));
 
     // 5. Вставим перед в блок .map блоком .map__filters-container
     var map = document.querySelector('.map');
@@ -59,7 +59,7 @@
   }
 
   // ф-ия создает одну метку
-  function createPin(index, pinObject, template) {
+  function create(index, pinObject, template) {
     var pin = template.cloneNode(true);
 
     // Кнопка
@@ -90,14 +90,14 @@
     var fragment = document.createDocumentFragment();
 
     ads.forEach(function (itr, index) {
-      fragment.appendChild(createPin(index, itr, template));
+      fragment.appendChild(create(index, itr, template));
     });
 
     return fragment;
 
   }
 
-  function removeAllPins() {
+  function removeAll() {
     var mapPins = document.querySelector('.map__pins').querySelectorAll('.map__pin');
 
     [].forEach.call(mapPins, function (itr) {
@@ -112,8 +112,8 @@
   window.pin = {
 
     createPins: createPins,
-    removeAllPins: removeAllPins,
-    setPinNonactive: setPinNonactive
+    removeAll: removeAll,
+    setNonactive: setNonactive
 
   };
 
