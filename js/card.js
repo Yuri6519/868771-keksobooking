@@ -41,12 +41,12 @@
 
   // ф-ия придает читабельный вид для количества гостей
   function getGoodGuestText(number) {
-    var room = 'гостей';
+    var guest = 'гостей';
 
     if (number === 1) {
-      room = 'гостя';
+      guest = 'гостя';
     }
-    return room;
+    return guest;
   }
 
   // ф-ия возвращает русское название типа жилья
@@ -101,7 +101,7 @@
   }
 
   // ф-ия создает DOM-element объявления
-  function getadvCard(adv) {
+  function getAdvCard(adv) {
     var template = document.querySelector('#card').content;
     var card = template.cloneNode(true);
     var strCapacity = STR_ROOM_GUEST.replace('{{offer.rooms}}', adv.offer.rooms).replace('{{offer.guests}}', adv.offer.guests).replace('{{room}}}', getGoodRoomText(adv.offer.rooms)).replace('{{guest}}', getGoodGuestText(adv.offer.guests));
@@ -193,7 +193,7 @@
 
   window.card = {
     removeOldAds: removeOldAds,
-    getadvCard: getadvCard,
+    getAdvCard: getAdvCard,
     dwellingTypes: dwellingTypes
 
   };
