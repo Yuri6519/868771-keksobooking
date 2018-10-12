@@ -9,37 +9,49 @@
   // блок для вставки сообщений
   var main = document.querySelector('main');
 
-  // начальное положение главной метки- константа для инициализации X
-  var MAIN_PIN_INIT_LEFT = parseInt(mainPin.style.left, 10);
+  // блок сообщения об успехе
+  var successElement = document.querySelector('#success').content.querySelector('.success');
+
+  // блок сообщения об ошибке
+  var errorElement = document.querySelector('#error').content.querySelector('.error');
+
+  var ERROR_LOADED_CLASS = 'error_on_load';
+
+  var ERROR_SAVED_CLASS = 'error_on_save';
 
   // начальное положение главной метки- константа для инициализации Y
   var MAIN_PIN_INIT_TOP = parseInt(mainPin.style.top, 10);
 
+  // лабел для кнопки
+  var CLOSE_BUTTON_LABEL = 'Закрыть';
+
   // ограничения
   var MAP_MIN_LEFT = 0;
-  var MAP_MAX_LENGTH = 1199;
   var MAP_MIN_TOP = 130;
   var MAP_MAX_HEIGHT = 630;
+
+  // ширина главной метки (беру по размеру из панели дебагера)
+  var MAIN_PIN_WIDTH = 65;
+  // высота главной метки (беру по размеру из панели дебагера)
+  var MAIN_PIN_HEIGHT = 65;
+  // хвост метки (беру по размеру из панели дебагера)
+  var MAIN_PIN_TAIL = 20; // весь квадрат = 65, image = 62, хвост идет от image и длина = 22. Округлил до 2 (65 - 62 / 2 = 1,5) и тогда хвост выходит за рамку 22-2=20. Как-так...
 
   // переменная для хранения левого верхнего угла главной метки - left
   var mainPinLeft;
   // переменная для хранения левого верхнего угла главной метки - top
   var mainPinTop;
-  // ширина главной метки (беру по размеру из панели дебагера)
-  var mainPinWidth = 65;
-  // высота главной метки (беру по размеру из панели дебагера)
-  var mainPinHeight = 65;
   // координата X середины главной метки
   var mainPinMiddleX;
   // координата Y середины главной метки
   var mainPinMiddleY;
-  // хвост метки (беру по размеру из панели дебагера)
-  var mainPinTail = 20; // весь квадрат = 65, image = 62, хвост идет от image и длина = 22. Округлил до 2 (65 - 62 / 2 = 1,5) и тогда хвост выходит за рамку 22-2=20. Как-так...
   // метка с хвостом
-  var mainPinFullHeight = mainPinHeight + mainPinTail;
+  var mainPinFullHeight = MAIN_PIN_HEIGHT + MAIN_PIN_TAIL;
 
   // ключ на блокировку отрисовки пинов из moseup
   var isMouseUp = false;
+
+  var mapSectionElement = document.querySelector('.map');
 
   // отрисовка меток похожих объявлений
   function showAdsData(filter) {
@@ -48,7 +60,7 @@
 
     // 2. Отрисуем сгенерированные DOM-элементы в блок .map__pins
     // 2.1. Чистка блока от старых пинов
-    window.pin.removeAllPins();
+    window.pin.removeAll();
 
     // 2.2. Добавляем в блок
     document.querySelector('.map__pins').appendChild(pinContainer);
@@ -69,20 +81,28 @@
 
   }
 
-  // callback на ошибку при загрузке данных с сервера
-  function cbErrorLoadAds(mes) {
-    // покажем ошибку
-    var errElement = document.querySelector('#error').content.querySelector('.error').cloneNode(true);
-    errElement.classList.add('error_on_load');
-    errElement.querySelector('.error__message').textContent = mes;
+  // отрисовка ошибки
+  function showError(errNode, errClassName, mes) {
+    errNode.classList.add(errClassName);
+    errNode.querySelector('.error__message').textContent = mes;
 
     // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(errElement);
+    main.appendChild(errNode);
+
+  }
+
+  // callback на ошибку при загрузке данных с сервера
+  function cbErrorLoadAds(mes) {
+    // кнопка
+    var errBtn = errorElement.querySelector('.error__button');
+    errBtn.textContent = CLOSE_BUTTON_LABEL;
+
+    // покажем ошибку
+    var errNode = errorElement.cloneNode(true);
+    showError(errNode, ERROR_LOADED_CLASS, mes);
 
     // обработка закрытия сообщения об ошибке
     function closeErrWindow() {
-
       // уберем сообщение об ошибке
       var err = main.querySelector('.error_on_load');
 
@@ -108,11 +128,6 @@
       }
     }
 
-
-    // кнопка
-    var errBtn = errElement.querySelector('.error__button');
-    errBtn.textContent = 'Закрыть';
-
     errBtn.addEventListener('click', function () {
       closeErrWindow();
     });
@@ -129,11 +144,8 @@
     processResetButtonClick();
 
     // покажем сообщение об успешном размещении объявления
-    var successElement = document.querySelector('#success').content.querySelector('.success').cloneNode(true);
-
-    // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(successElement);
+    var successNode = successElement.cloneNode(true);
+    main.appendChild(successNode);
 
     // обработка закрытия сообщения об успешном сохранении данных
     function closeSuccessWindow() {
@@ -166,14 +178,10 @@
 
   // callback на ошибку при загрузке данных с сервера
   function cbErrorSaveAds(mes) {
-    // покажем ошибку
-    var errElement = document.querySelector('#error').content.querySelector('.error').cloneNode(true);
-    errElement.classList.add('error_on_save');
-    errElement.querySelector('.error__message').textContent = mes;
 
-    // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(errElement);
+    // покажем ошибку
+    var errNode = errorElement.cloneNode(true);
+    showError(errNode, ERROR_SAVED_CLASS, mes);
 
     // обработка закрытия сообщения об ошибке
     function closeErrWindow() {
@@ -201,7 +209,7 @@
     }
 
     // кнопка
-    var errBtn = errElement.querySelector('.error__button');
+    var errBtn = errorElement.querySelector('.error__button');
     errBtn.addEventListener('click', function () {
       closeErrWindow();
     });
@@ -212,12 +220,11 @@
   }
 
   // ф-ия блокирует/разблокирует карту
-  function toggleMapAbility(isNotFaded) {
-    var map = document.querySelector('.map');
+  function toggleAbility(isNotFaded) {
     if (isNotFaded) {
-      map.classList.remove('map--faded');
+      mapSectionElement.classList.remove('map--faded');
     } else {
-      map.classList.add('map--faded');
+      mapSectionElement.classList.add('map--faded');
     }
 
   }
@@ -225,15 +232,15 @@
   // главная ф-ия переключения активности формы и карты
   function toggleMainFormActivity(isActive) {
     window.form.toggleAdFormAbility(isActive);
-    window.filter.toggleFilterFormAbility(isActive);
-    toggleMapAbility(isActive);
+    window.filter.toggleFormAbility(isActive);
+    toggleAbility(isActive);
   }
 
   // установка значения адреса (острый конец метки)
   function setAddress(mainPinNewLeft, mainPinNewRight) {
 
     // координаты хвоста относительно верхнего левого угла
-    var tailX = mainPinNewLeft + Math.round(mainPinWidth / 2);
+    var tailX = mainPinNewLeft + Math.round(MAIN_PIN_WIDTH / 2);
     var tailY = mainPinNewRight + mainPinFullHeight;
 
     window.form.getAddressStr(tailX, tailY);
@@ -286,8 +293,10 @@
       // Новые координаты верхнего левого угла метки, именно на них поставил ограничение
       // x
       var shiftLeft = (mainPin.offsetLeft - shiftPos.x);
-      shiftLeft = shiftLeft >= MAP_MIN_LEFT - Math.round(mainPinWidth / 2) ? shiftLeft : MAP_MIN_LEFT - Math.round(mainPinWidth / 2);
-      shiftLeft = shiftLeft + Math.round(mainPinWidth / 2) <= MAP_MAX_LENGTH ? shiftLeft : MAP_MAX_LENGTH - Math.round(mainPinWidth / 2);
+      var mapMaxLength = mapSectionElement.offsetWidth;
+      shiftLeft = shiftLeft >= MAP_MIN_LEFT - Math.round(MAIN_PIN_WIDTH / 2) ? shiftLeft : MAP_MIN_LEFT - Math.round(MAIN_PIN_WIDTH / 2);
+      shiftLeft = shiftLeft + Math.round(MAIN_PIN_WIDTH / 2) <= mapMaxLength ? shiftLeft : mapMaxLength - Math.round(MAIN_PIN_WIDTH / 2);
+
       // y
       var shifTop = (mainPin.offsetTop - shiftPos.y);
       shifTop = shifTop >= MAP_MIN_TOP ? shifTop : MAP_MIN_TOP;
@@ -349,13 +358,13 @@
     window.card.removeOldAds();
 
     // очистим пины
-    window.pin.removeAllPins();
+    window.pin.removeAll();
 
     // очистим и проинициализируем объекты фото
     window.photo.initLoader();
 
     // инициализируем
-    initMap();
+    init();
 
   }
 
@@ -371,7 +380,7 @@
   }
 
   // инициализация
-  function initMap() {
+  function init() {
     // перевод формы в неактивное состояние
     toggleMainFormActivity(false);
 
@@ -384,14 +393,16 @@
     // начальное значение поля address ТЗ:
     // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
 
-    // верхний левый угол главной метки - left
-    mainPinLeft = MAIN_PIN_INIT_LEFT;
+    // верхний левый угол главной метки зависит от размеров карты, которая уменьшпется при изменении размера окна
+    mainPinLeft = Math.round((mapSectionElement.offsetWidth / 2)) - Math.round(MAIN_PIN_WIDTH / 2);
+
     // верхний левый угол главной метки - top
     mainPinTop = MAIN_PIN_INIT_TOP;
+
     // координата X середины главной метки
-    mainPinMiddleX = mainPinLeft + Math.round(mainPinWidth / 2);
+    mainPinMiddleX = mainPinLeft + Math.round(MAIN_PIN_WIDTH / 2);
     // координата Y середины главной метки
-    mainPinMiddleY = mainPinTop + Math.round((mainPinHeight / 2));
+    mainPinMiddleY = mainPinTop + Math.round((MAIN_PIN_HEIGHT / 2));
     // начальное положение главной метки
     setMainPinPos(mainPinLeft, mainPinTop);
     // начальная строка ареса
@@ -402,10 +413,9 @@
 
   }
 
-
   // Точка входа
   // Инициализация
-  initMap();
+  init();
 
   // кнопка reset
   document.querySelector('.ad-form__reset').addEventListener('click', onButtonResetClick);
@@ -415,7 +425,7 @@
 
 
   // Инициализация формы фильтра
-  window.filter.initFilerForm(cbFilterEvent);
+  window.filter.initForm(cbFilterEvent);
 
   // Инициализация загрузчика фотографий
   window.photo.initLoader();

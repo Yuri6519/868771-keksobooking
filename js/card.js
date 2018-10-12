@@ -10,6 +10,14 @@
   // шаблон времени заезда и выезда
   var STR_CHECK_IN_OUT = 'Заезд после {{offer.checkin}}, выезд до {{offer.checkout}}';
 
+  // лабел для цены жилья
+  var PRICE_LABEL = '₽/ночь';
+
+  // фото
+  var PIN_ALT = 'Фотография жилья';
+
+  var mapSectionElement = document.querySelector('.map');
+
   var dwellingTypes = {
     'palace': {nameRus: 'Дворец', minPrice: 10000},
     'flat': {nameRus: 'Квартира', minPrice: 1000},
@@ -19,7 +27,7 @@
 
   // чистка от прежних объявлений
   function removeOldAds() {
-    var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
+    var mapAds = mapSectionElement.querySelectorAll('.map__card');
 
     [].forEach.call(mapAds, function (itr) {
       itr.remove();
@@ -41,12 +49,12 @@
 
   // ф-ия придает читабельный вид для количества гостей
   function getGoodGuestText(number) {
-    var room = 'гостей';
+    var guest = 'гостей';
 
     if (number === 1) {
-      room = 'гостя';
+      guest = 'гостя';
     }
-    return room;
+    return guest;
   }
 
   // ф-ия возвращает русское название типа жилья
@@ -61,13 +69,17 @@
       itr.remove();
     });
 
+    var fragment = document.createDocumentFragment();
+
     // добавим из featArr
     featArr.forEach(function (itr) {
       var elLi = document.createElement('li');
       elLi.classList.add('popup__feature');
       elLi.classList.add('popup__feature--' + itr);
-      features.appendChild(elLi);
+      fragment.appendChild(elLi);
     });
+
+    features.appendChild(fragment);
 
     if (feature.length === 0) {
       feature.hidden = true;
@@ -83,16 +95,20 @@
       itr.remove();
     });
 
+    var fragment = document.createDocumentFragment();
+
     // добавим из photoArr
     photoArr.forEach(function (itr) {
       var elImg = document.createElement('img');
       elImg.classList.add('popup__photo');
       elImg.width = 45;
       elImg.height = 40;
-      elImg.alt = 'Фотография жилья';
+      elImg.alt = PIN_ALT;
       elImg.src = itr;
-      photos.appendChild(elImg);
+      fragment.appendChild(elImg);
     });
+
+    photos.appendChild(fragment);
 
     if (photo.length === 0) {
       photo.hidden = true;
@@ -100,76 +116,57 @@
 
   }
 
-  // ф-ия создает DOM-element объявления
-  function getadvCard(adv) {
+  // ф-ия запоняет отдельный элемент объявления
+  function setData(selector, content, isSrc) {
+    if (content) {
+      if (isSrc) {
+        selector.src = content;
+      } else {
+        selector.textContent = content;
+      }
+    } else {
+      selector.hidden = true;
+    }
+  }
+
+  // ф-ия создает и возвращает DOM-element объявления
+  function get(adv) {
     var template = document.querySelector('#card').content;
     var card = template.cloneNode(true);
     var strCapacity = STR_ROOM_GUEST.replace('{{offer.rooms}}', adv.offer.rooms).replace('{{offer.guests}}', adv.offer.guests).replace('{{room}}}', getGoodRoomText(adv.offer.rooms)).replace('{{guest}}', getGoodGuestText(adv.offer.guests));
     var strCheckInOut = STR_CHECK_IN_OUT.replace('{{offer.checkin}}', adv.offer.checkin).replace('{{offer.checkout}}', adv.offer.checkout);
 
-    if (adv.offer.title) {
-      card.querySelector('.popup__title').textContent = adv.offer.title;
-    } else {
-      card.querySelector('.popup__title').hidden = true;
-    }
+    setData(card.querySelector('.popup__title'), adv.offer.title);
 
-    if (adv.offer.address) {
-      card.querySelector('.popup__text--address').textContent = adv.offer.address;
-    } else {
-      card.querySelector('.popup__text--address').hidden = true;
-    }
+    setData(card.querySelector('.popup__text--address'), adv.offer.address);
 
-    if (adv.offer.price) {
-      card.querySelector('.popup__text--price').textContent = adv.offer.price + '₽/ночь';
-    } else {
-      card.querySelector('.popup__text--price').hidden = true;
-    }
+    setData(card.querySelector('.popup__text--price'), adv.offer.price + PRICE_LABEL);
 
-    if (adv.offer.type) {
-      card.querySelector('.popup__type').textContent = getDwellingTypeRus(adv.offer.type);
-    } else {
-      card.querySelector('.popup__type').hidden = true;
-    }
+    setData(card.querySelector('.popup__type'), getDwellingTypeRus(adv.offer.type));
 
-    if (strCapacity) {
-      card.querySelector('.popup__text--capacity').textContent = strCapacity;
-    } else {
-      card.querySelector('.popup__text--capacity').hidden = true;
-    }
+    setData(card.querySelector('.popup__text--capacity'), strCapacity);
 
-    if (strCheckInOut) {
-      card.querySelector('.popup__text--time').textContent = strCheckInOut;
-    } else {
-      card.querySelector('.popup__text--time').hidden = true;
-    }
+    setData(card.querySelector('.popup__text--time'), strCheckInOut);
 
     // доступные удобства
     var features = card.querySelector('.popup__features');
     fillFeatures(features, adv.offer.features);
 
-    if (adv.offer.description) {
-      card.querySelector('.popup__description').textContent = adv.offer.description;
-    } else {
-      card.querySelector('.popup__description').hidden = true;
-    }
+    setData(card.querySelector('.popup__description'), adv.offer.description);
 
     // фото
     var photos = card.querySelector('.popup__photos');
     fillPhoto(photos, adv.offer.photos);
 
     // аватар
-    if (adv.author.avatar) {
-      card.querySelector('.popup__avatar').src = adv.author.avatar;
-    } else {
-      card.querySelector('.popup__avatar').hidden = true;
-    }
+    setData(card.querySelector('.popup__avatar'), adv.author.avatar, true);
 
     // кнопка "Закрыть"
     // регистрация события закрытия объявления
     var btnAdClose = card.querySelector('.popup__close');
 
     btnAdClose.addEventListener('click', function () {
-      procesCardBtnCloseClick();
+      procesBtnCloseClick();
     });
 
     document.addEventListener('keydown', onDocKeyDown);
@@ -177,23 +174,22 @@
     return card;
   }
 
-  function procesCardBtnCloseClick() {
+  function procesBtnCloseClick() {
     removeOldAds();
-    window.pin.setPinNonactive();
+    window.pin.setNonactive();
     document.removeEventListener('keydown', onDocKeyDown);
   }
 
   // событие по нажатию клавиши
   function onDocKeyDown(evt) {
     if (evt.keyCode === window.utils.KEY_ESCAPE) {
-      procesCardBtnCloseClick();
+      procesBtnCloseClick();
     }
   }
 
-
   window.card = {
     removeOldAds: removeOldAds,
-    getadvCard: getadvCard,
+    get: get,
     dwellingTypes: dwellingTypes
 
   };

@@ -4,6 +4,8 @@
 
 (function () {
 
+  var DEFAULT_PHOTO_PLACEHOLDER = 'img/muffin-grey.svg';
+
   // родительский конструктор
   function Photo(elInput, elImage) {
     this.setInputElement(elInput);
@@ -37,13 +39,13 @@
     },
 
     // показ фотографии
-    showPhoto: function (data) {
+    show: function (data) {
       this._image.src = data;
     },
 
     // обработчик события загрузки файла
     onFileLoad: function (evt) {
-      this.showPhoto(evt.currentTarget.result);
+      this.show(evt.currentTarget.result);
     },
 
     // загрузка файла
@@ -81,20 +83,20 @@
     // частично переопределим родительский метод
     Photo.prototype.init.call(this);
 
-    this._image.src = 'img/muffin-grey.svg';
+    this._image.src = DEFAULT_PHOTO_PLACEHOLDER;
 
   };
 
   // конструктор для фото жилья
-  function PhotoDwell(elInput, elImage) {
+  function PhotoDwelling(elInput, elImage) {
     Photo.call(this, elInput, elImage);
   }
 
-  PhotoDwell.prototype = Object.create(Photo.prototype);
+  PhotoDwelling.prototype = Object.create(Photo.prototype);
 
-  PhotoDwell.prototype._photos = [];
+  PhotoDwelling.prototype._photos = [];
 
-  PhotoDwell.prototype.init = function () {
+  PhotoDwelling.prototype.init = function () {
     // частично переопределим родительский метод
     Photo.prototype.init.call(this);
 
@@ -105,7 +107,7 @@
 
 
   // добавляет фото в массив
-  PhotoDwell.prototype.addPhoto = function (data) {
+  PhotoDwelling.prototype.addPhoto = function (data) {
     var res = false;
     var newFileName = this._elInput.files[0].name.toLowerCase();
 
@@ -127,11 +129,11 @@
 
   };
 
-  PhotoDwell.prototype.clearPhotos = function () {
+  PhotoDwelling.prototype.clearPhotos = function () {
     this._photos = [];
   };
 
-  PhotoDwell.prototype.clearPhotosElements = function (def) {
+  PhotoDwelling.prototype.clearPhotosElements = function (def) {
     var imgList = this._image.querySelectorAll('.ad-form__photo');
     [].forEach.call(imgList, function (itr) {
       itr.remove();
@@ -146,7 +148,7 @@
 
   };
 
-  PhotoDwell.prototype.sortPhotos = function (idFrom, idTo) {
+  PhotoDwelling.prototype.sortPhotos = function (idFrom, idTo) {
     // если было перетаскивание (mouseup на др. элементе)
     if (idFrom !== idTo) {
       var indFrom = -1;
@@ -171,7 +173,7 @@
 
   };
 
-  PhotoDwell.prototype.onDragStart = function (evt) {
+  PhotoDwelling.prototype.onDragStart = function (evt) {
     evt.target.style.opacity = '0.4';
     evt.dataTransfer.effectAllowed = 'move';
 
@@ -179,27 +181,27 @@
 
   };
 
-  PhotoDwell.prototype.onDragOver = function (evt) {
+  PhotoDwelling.prototype.onDragOver = function (evt) {
     evt.preventDefault();
 
     evt.dataTransfer.dropEffect = 'move';
   };
 
-  PhotoDwell.prototype.onDragEnter = function (evt) {
+  PhotoDwelling.prototype.onDragEnter = function (evt) {
     evt.preventDefault();
 
     this.classList.add('over');
 
   };
 
-  PhotoDwell.prototype.onDragLeave = function (evt) {
+  PhotoDwelling.prototype.onDragLeave = function (evt) {
     evt.preventDefault();
 
     this.classList.remove('over');
 
   };
 
-  PhotoDwell.prototype.onDrop = function (evt) {
+  PhotoDwelling.prototype.onDrop = function (evt) {
     evt.preventDefault();
 
     evt.target.classList.remove('over');
@@ -208,19 +210,21 @@
     var idTo = parseInt(evt.target.id, 10);
 
     this.sortPhotos(idFrom, idTo);
-    this.showPhotoArray();
+    this.showAll();
 
   };
 
-  PhotoDwell.prototype.onDragEnd = function (evt) {
+  PhotoDwelling.prototype.onDragEnd = function (evt) {
     evt.preventDefault();
 
     this.style.opacity = '1';
 
   };
 
-  PhotoDwell.prototype.showPhotoArray = function () {
+  PhotoDwelling.prototype.showAll = function () {
     this.clearPhotosElements();
+
+    var fragment = document.createDocumentFragment();
 
     for (var i = 0; i < this._photos.length; i++) {
       var elDiv = document.createElement('div');
@@ -243,17 +247,18 @@
       elImg.addEventListener('drop', this.onDrop.bind(this));
       elImg.addEventListener('dragend', this.onDragEnd);
 
-
       elDiv.appendChild(elImg);
-      this._image.appendChild(elDiv);
+      fragment.appendChild(elDiv);
     }
+
+    this._image.appendChild(fragment);
 
   };
 
-  PhotoDwell.prototype.showPhoto = function (data) {
+  PhotoDwelling.prototype.show = function (data) {
     // переопределим родительский
     if (this.addPhoto(data)) {
-      this.showPhotoArray();
+      this.showAll();
     }
   };
 
@@ -272,7 +277,7 @@
     var elDwellInput = document.querySelector('.ad-form__upload input[type=file]');
     var elDwellImage = document.querySelector('.ad-form__photo-container');
     // объект для работы с загрузкой фото жилья
-    var photoDwell = new PhotoDwell(elDwellInput, elDwellImage);
+    var photoDwell = new PhotoDwelling(elDwellInput, elDwellImage);
     photoDwell.init();
   }
 
