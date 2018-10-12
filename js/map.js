@@ -9,8 +9,15 @@
   // блок для вставки сообщений
   var main = document.querySelector('main');
 
-  // начальное положение главной метки- константа для инициализации X
-  var MAIN_PIN_INIT_LEFT = parseInt(mainPin.style.left, 10);
+  // блок сообщения об успехе
+  var successElement = document.querySelector('#success').content.querySelector('.success');
+
+  // блок сообщения об ошибке
+  var errorElement = document.querySelector('#error').content.querySelector('.error');
+
+  var ERROR_LOADED_CLASS = 'error_on_load';
+
+  var ERROR_SAVED_CLASS = 'error_on_save';
 
   // начальное положение главной метки- константа для инициализации Y
   var MAIN_PIN_INIT_TOP = parseInt(mainPin.style.top, 10);
@@ -74,20 +81,28 @@
 
   }
 
-  // callback на ошибку при загрузке данных с сервера
-  function cbErrorLoadAds(mes) {
-    // покажем ошибку
-    var errElement = document.querySelector('#error').content.querySelector('.error').cloneNode(true);
-    errElement.classList.add('error_on_load');
-    errElement.querySelector('.error__message').textContent = mes;
+  // отрисовка ошибки
+  function showError(errNode, errClassName, mes) {
+    errNode.classList.add(errClassName);
+    errNode.querySelector('.error__message').textContent = mes;
 
     // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(errElement);
+    main.appendChild(errNode);
+
+  }
+
+  // callback на ошибку при загрузке данных с сервера
+  function cbErrorLoadAds(mes) {
+    // кнопка
+    var errBtn = errorElement.querySelector('.error__button');
+    errBtn.textContent = CLOSE_BUTTON_LABEL;
+
+    // покажем ошибку
+    var errNode = errorElement.cloneNode(true);
+    showError(errNode, ERROR_LOADED_CLASS, mes);
 
     // обработка закрытия сообщения об ошибке
     function closeErrWindow() {
-
       // уберем сообщение об ошибке
       var err = main.querySelector('.error_on_load');
 
@@ -113,11 +128,6 @@
       }
     }
 
-
-    // кнопка
-    var errBtn = errElement.querySelector('.error__button');
-    errBtn.textContent = CLOSE_BUTTON_LABEL;
-
     errBtn.addEventListener('click', function () {
       closeErrWindow();
     });
@@ -134,11 +144,8 @@
     processResetButtonClick();
 
     // покажем сообщение об успешном размещении объявления
-    var successElement = document.querySelector('#success').content.querySelector('.success').cloneNode(true);
-
-    // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(successElement);
+    var successNode = successElement.cloneNode(true);
+    main.appendChild(successNode);
 
     // обработка закрытия сообщения об успешном сохранении данных
     function closeSuccessWindow() {
@@ -171,14 +178,10 @@
 
   // callback на ошибку при загрузке данных с сервера
   function cbErrorSaveAds(mes) {
-    // покажем ошибку
-    var errElement = document.querySelector('#error').content.querySelector('.error').cloneNode(true);
-    errElement.classList.add('error_on_save');
-    errElement.querySelector('.error__message').textContent = mes;
 
-    // блок для вставки
-    main = document.querySelector('main');
-    main.appendChild(errElement);
+    // покажем ошибку
+    var errNode = errorElement.cloneNode(true);
+    showError(errNode, ERROR_SAVED_CLASS, mes);
 
     // обработка закрытия сообщения об ошибке
     function closeErrWindow() {
@@ -206,7 +209,7 @@
     }
 
     // кнопка
-    var errBtn = errElement.querySelector('.error__button');
+    var errBtn = errorElement.querySelector('.error__button');
     errBtn.addEventListener('click', function () {
       closeErrWindow();
     });
@@ -390,10 +393,12 @@
     // начальное значение поля address ТЗ:
     // насчёт определения координат метки в этом случае нет никаких инструкций, ведь в неактивном режиме страницы метка круглая, поэтому мы можем взять за исходное значение поля адреса середину метки.
 
-    // верхний левый угол главной метки - left
-    mainPinLeft = MAIN_PIN_INIT_LEFT;
+    // верхний левый угол главной метки зависит от размеров карты, которая уменьшпется при изменении размера окна
+    mainPinLeft = Math.round((mapSectionElement.offsetWidth / 2)) - Math.round(MAIN_PIN_WIDTH / 2);
+
     // верхний левый угол главной метки - top
     mainPinTop = MAIN_PIN_INIT_TOP;
+
     // координата X середины главной метки
     mainPinMiddleX = mainPinLeft + Math.round(MAIN_PIN_WIDTH / 2);
     // координата Y середины главной метки
@@ -407,7 +412,6 @@
     isMouseUp = false;
 
   }
-
 
   // Точка входа
   // Инициализация

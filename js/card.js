@@ -16,6 +16,8 @@
   // фото
   var PIN_ALT = 'Фотография жилья';
 
+  var mapSectionElement = document.querySelector('.map');
+
   var dwellingTypes = {
     'palace': {nameRus: 'Дворец', minPrice: 10000},
     'flat': {nameRus: 'Квартира', minPrice: 1000},
@@ -25,7 +27,7 @@
 
   // чистка от прежних объявлений
   function removeOldAds() {
-    var mapAds = document.querySelector('.map').querySelectorAll('.map__card');
+    var mapAds = mapSectionElement.querySelectorAll('.map__card');
 
     [].forEach.call(mapAds, function (itr) {
       itr.remove();

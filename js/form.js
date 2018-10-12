@@ -11,6 +11,39 @@
   // элемент формы
   var adForm = document.querySelector('.ad-form');
 
+  // заголовок
+  var adTitle = adForm.querySelector('#title');
+
+  // адрес
+  var adAddress = adForm.querySelector('#address');
+
+  // цена
+  var adPrice = adForm.querySelector('#price');
+
+  // тип
+  var adType = adForm.querySelector('#type');
+
+  // кол-во комнат
+  var adRoomNum = adForm.querySelector('#room_number');
+
+  // вместимость
+  var adCapacity = adForm.querySelector('#capacity');
+
+  // время заезда
+  var adCheckIn = adForm.querySelector('#timein');
+
+  // время выезда
+  var adCheckOut = adForm.querySelector('#timeout');
+
+  // описание
+  var adDescription = adForm.querySelector('#description');
+
+  // особенности
+  var adFeatures = document.querySelector('.features').querySelectorAll('input');
+
+  // поля
+  var adFormFieldSets = adForm.querySelectorAll('fieldset');
+
   // массив соответствий кол-ва комнат кол-ву жильцов (жестко соответствует значениям поля value эл-в room_number и capacity)
   var mappedNames = [
     {
@@ -44,16 +77,13 @@
       adForm.classList.add('ad-form--disabled');
     }
 
-    // fieldset
-    var adFormFieldSets = adForm.querySelectorAll('fieldset');
-
     [].forEach.call(adFormFieldSets, function (itr) {
       itr.disabled = !isEnabled;
     });
   }
 
   function getAddressStr(addrX, addrY) {
-    adForm.querySelector('#address').value = addrX + ', ' + addrY;
+    adAddress.value = addrX + ', ' + addrY;
   }
 
   // обработка события на выбор типа жилья
@@ -61,10 +91,13 @@
     var options = selectDwelType.querySelectorAll('option');
     if (options.length > 0 & selectDwelType.selectedIndex >= 0) {
       var option = options[selectDwelType.selectedIndex];
-      var adPrice = adForm.querySelector('#price');
       adPrice.min = getMinDwellPrice(option.value);
       adPrice.placeholder = adPrice.min;
     }
+  }
+
+  function ckearCapacity() {
+    adCapacity.selectedIndex = -1;
   }
 
   // установка опций выбора количества гостей
@@ -77,7 +110,7 @@
 
     if (vals.length > 0) {
       // установка кол-ва гостей
-      var localCapOptions = adForm.querySelector('#capacity').querySelectorAll('option');
+      var localCapOptions = adCapacity.querySelectorAll('option');
 
       // уберем все элементы
       [].forEach.call(localCapOptions, function (itr) {
@@ -86,7 +119,7 @@
       });
 
       // ничего не выбрано
-      adForm.querySelector('#capacity').selectedIndex = -1;
+      ckearCapacity();
 
       // добавим только нужные
       vals.forEach(function (itrVal) {
@@ -112,33 +145,31 @@
   // очистка поей
   function clearAllInputs() {
     // заголовок
-    adForm.querySelector('#title').value = '';
+    adTitle.value = '';
 
     // тип и цена (по умолчанию выберем Квартира = 1000)
-    adForm.querySelector('#price').value = '';
-    adForm.querySelector('#type').selectedIndex = 1;
-    processDwellTypeChange(adForm.querySelector('#type'));
+    adPrice.value = '';
+    adType.selectedIndex = 1;
+    processDwellTypeChange(adType);
 
     // кол-во комнат и кол-во мест
     // по умолчанию установим максимально (3 комнаты для 1, 2, 3 гостей)
-    adForm.querySelector('#room_number').selectedIndex = 2;
-    adForm.querySelector('#capacity').selectedIndex = -1;
-    processRoomChange(adForm.querySelector('#room_number'));
+    adRoomNum.selectedIndex = 2;
+    ckearCapacity();
+    processRoomChange(adRoomNum);
 
     // время заезда - выезда
-    adForm.querySelector('#timein').selectedIndex = 0;
-    adForm.querySelector('#timeout').selectedIndex = 0;
+    adCheckIn.selectedIndex = 0;
+    adCheckOut.selectedIndex = 0;
 
     // адрес - очистим от сарых значений (установка в отдельной ф-ии)
-    adForm.querySelector('#address').value = '';
+    adAddress.value = '';
 
     // описание
-    adForm.querySelector('#description').value = '';
+    adDescription.value = '';
 
     // особенности
-    var features = document.querySelector('.features').querySelectorAll('input');
-
-    [].forEach.call(features, function (itr) {
+    [].forEach.call(adFeatures, function (itr) {
       if (itr.type === 'checkbox') {
         itr.checked = false;
       }
@@ -174,7 +205,6 @@
     //  обязательное текстовое поле;
     //  минимальная длина — 30 символов;
     //  максимальная длина — 100 символов;
-    var adTitle = adForm.querySelector('#title');
     adTitle.required = true;
     adTitle.minLength = '30';
     adTitle.maxLength = '100';
@@ -183,37 +213,31 @@
     // обязательное поле;
     // числовое поле;
     // максимальное значение — 1000000;
-    var adPrice = adForm.querySelector('#price');
     adPrice.required = true;
     adPrice.type = 'number';
     adPrice.max = 1000000;
 
     // 3. Поле «Тип жилья» влияет на минимальное значение поля «Цена за ночь»
-    var adDwellType = adForm.querySelector('#type');
-    adDwellType.addEventListener('change', function (evt) {
+    adType.addEventListener('change', function (evt) {
       processDwellTypeChange(evt.currentTarget);
     });
 
     // 4. Адрес. Ручное редактирование поля запрещено.
-    var adAddress = adForm.querySelector('#address');
     adAddress.readOnly = true;
 
     // 5. Поля «Время заезда» и «Время выезда» синхронизированы
     // поле timeIn
-    var adCheckIn = adForm.querySelector('#timein');
     adCheckIn.addEventListener('change', function (evt) {
       processCheckInOutTime(evt.currentTarget);
     });
 
     // поле timeOut
-    var adCheckOut = adForm.querySelector('#timeout');
     adCheckOut.addEventListener('change', function (evt) {
       processCheckInOutTime(evt.currentTarget);
     });
 
     // 6. Поле «Количество комнат» синхронизировано с полем «Количество мест»
-    var adRoomNumber = adForm.querySelector('#room_number');
-    adRoomNumber.addEventListener('change', function (evt) {
+    adRoomNum.addEventListener('change', function (evt) {
       processRoomChange(evt.currentTarget);
     });
 
