@@ -7,9 +7,10 @@
   var DEFAULT_PHOTO_PLACEHOLDER = 'img/muffin-grey.svg';
 
   // родительский конструктор
-  function Photo(elInput, elImage) {
+  function Photo(elInput, elImage, elDropZone) {
     this.setInputElement(elInput);
     this.setImageElement(elImage);
+    this.setDropZoneElement(elDropZone);
   }
 
   Photo.prototype = {
@@ -26,6 +27,11 @@
       this._image = image;
     },
 
+    // сеттер для поля _dz
+    setDropZoneElement: function (dz) {
+      this._dz = dz;
+    },
+
     // проверка расширения файла
     isFileExtMatch: function (fileName) {
       return this.PHOTO_FILE_EXT.some(function (itr) {
@@ -34,8 +40,8 @@
     },
 
     // проверка выбора файла
-    fileLoadCheck: function () {
-      return this._elInput.files[0] && this.isFileExtMatch(this._elInput.files[0].name.toLowerCase());
+    fileLoadCheck: function (file) {
+      return file && this.isFileExtMatch(file.name.toLowerCase());
     },
 
     // показ фотографии
@@ -49,33 +55,56 @@
     },
 
     // загрузка файла
-    fileLoad: function () {
+    fileLoad: function (file) {
       var _fileReader = new FileReader();
 
       _fileReader.addEventListener('load', this.onFileLoad.bind(this));
 
-      _fileReader.readAsDataURL(this._elInput.files[0]);
+      _fileReader.readAsDataURL(file);
 
     },
 
     onInputChange: function () {
 
-      if (this.fileLoadCheck()) {
+      if (this.fileLoadCheck(this._elInput.files[0])) {
         // файл выбран и расширение подходит
-        this.fileLoad();
+        this._currentFileName = this._elInput.files[0].name.toLowerCase();
+        this.fileLoad(this._elInput.files[0]);
       }
+    },
+
+    onDragOverZoneDrop: function (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      evt.dataTransfer.dropEffect = 'copy';
+    },
+
+    onDropZoneDrop: function (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+
+      var file = evt.dataTransfer.files[0];
+
+      if (this.fileLoadCheck(file)) {
+        // файл выбран и расширение подходит
+        this._currentFileName = file.name.toLowerCase();
+        this.fileLoad(file);
+      }
+
     },
 
     // инициализация
     init: function () {
       this._elInput.addEventListener('change', this.onInputChange.bind(this));
+      this._dz.addEventListener('dragover', this.onDragOverZoneDrop);
+      this._dz.addEventListener('drop', this.onDropZoneDrop.bind(this));
     }
 
   };
 
   // конструктор для аватара
-  function PhotoAvatar(elInput, elImage) {
-    Photo.call(this, elInput, elImage);
+  function PhotoAvatar(elInput, elImage, elAvatarDropZone) {
+    Photo.call(this, elInput, elImage, elAvatarDropZone);
   }
   PhotoAvatar.prototype = Object.create(Photo.prototype);
 
@@ -88,13 +117,15 @@
   };
 
   // конструктор для фото жилья
-  function PhotoDwelling(elInput, elImage) {
-    Photo.call(this, elInput, elImage);
+  function PhotoDwelling(elInput, elImage, elDwellDropZone) {
+    Photo.call(this, elInput, elImage, elDwellDropZone);
   }
 
   PhotoDwelling.prototype = Object.create(Photo.prototype);
 
   PhotoDwelling.prototype._photos = [];
+
+  PhotoDwelling.prototype._currentFileName = '';
 
   PhotoDwelling.prototype.init = function () {
     // частично переопределим родительский метод
@@ -109,7 +140,8 @@
   // добавляет фото в массив
   PhotoDwelling.prototype.addPhoto = function (data) {
     var res = false;
-    var newFileName = this._elInput.files[0].name.toLowerCase();
+
+    var newFileName = this._currentFileName;
 
     // только, если новая фотография
     res = !this._photos.some(function (itr) {
@@ -266,8 +298,9 @@
   function initAvatarLoader() {
     var elAvatarInput = document.querySelector('.ad-form__field input[type=file]');
     var elAvatarImage = document.querySelector('.ad-form-header__preview img');
+    var elAvatarDropZone = document.querySelector('.ad-form__field');
     // объект для работы с загрузкой аватара пользователя
-    var photoAvatar = new PhotoAvatar(elAvatarInput, elAvatarImage);
+    var photoAvatar = new PhotoAvatar(elAvatarInput, elAvatarImage, elAvatarDropZone);
     photoAvatar.init();
   }
 
@@ -276,8 +309,9 @@
     // фото жилья
     var elDwellInput = document.querySelector('.ad-form__upload input[type=file]');
     var elDwellImage = document.querySelector('.ad-form__photo-container');
+    var elDwellDropZone = document.querySelector('.ad-form__upload');
     // объект для работы с загрузкой фото жилья
-    var photoDwell = new PhotoDwelling(elDwellInput, elDwellImage);
+    var photoDwell = new PhotoDwelling(elDwellInput, elDwellImage, elDwellDropZone);
     photoDwell.init();
   }
 
